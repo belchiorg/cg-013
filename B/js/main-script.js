@@ -72,7 +72,7 @@ function createCameras() {
     cameras.claw_camera.position.set(30, 30, 30);
     cameras.claw_camera.lookAt(scene.position);
 
-    cameras.orbit_camera = new THREE.PerspectiveCamera(70, aspectRatio, 1, 150); // Ajuste conforme necessário
+    cameras.orbit_camera = new THREE.PerspectiveCamera(70, aspectRatio, 1, 300); // Ajuste conforme necessário
     cameras.orbit_camera.position.set(30, 30, 30);
     cameras.orbit_camera.lookAt(scene.position);
 
