@@ -1,6 +1,12 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
+import * as Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
+//////////////////////
+/* GLOBAL VARIABLES */
+//////////////////////
 let cameras = {
     //Should be like a map with all the cameras
     top_camera: null,
@@ -12,7 +18,12 @@ let cameras = {
     orbit_camera: null
 }
 
-let grua_in_english;
+let scene_objects = {
+    grua_in_english: null,
+    top_part: null,
+    car: null,
+    claw: null,
+}
 
 let current_camera, scene, renderer;
 
@@ -20,6 +31,9 @@ let controls;
 
 let geometry, material, mesh;
 
+/////////////////////
+/* CREATE SCENE(S) */
+/////////////////////
 function createScene() {
     'use strict';
 
@@ -28,12 +42,15 @@ function createScene() {
 
     scene.add(new THREE.AxesHelper(20));
 
-    grua_in_english = new THREE.Object3D();
+    scene_objects.grua_in_english = new THREE.Object3D();
 
-    createBase(grua_in_english);
-    scene.add(grua_in_english);
+    createBase(scene_objects.grua_in_english);
+    scene.add(scene_objects.grua_in_english);
 }
 
+//////////////////////
+/* CREATE CAMERA(S) */
+//////////////////////
 function createCameras() {
     'use strict';
 
@@ -76,6 +93,13 @@ function createCameras() {
     controls = new OrbitControls( cameras.orbit_camera, renderer.domElement );
 }
 
+/////////////////////
+/* CREATE LIGHT(S) */
+/////////////////////
+
+////////////////////////
+/* CREATE OBJECT3D(S) */
+////////////////////////
 function createTopPart() {
 
 }
@@ -99,6 +123,84 @@ function createBase(grua) {
     grua.add(topPart);
 }
 
+
+//////////////////////
+/* CHECK COLLISIONS */
+//////////////////////
+function checkCollisions(){
+    'use strict';
+
+}
+
+///////////////////////
+/* HANDLE COLLISIONS */
+///////////////////////
+function handleCollisions(){
+    'use strict';
+
+}
+
+////////////
+/* UPDATE */
+////////////
+function update(){
+    'use strict';
+
+}
+
+/////////////
+/* DISPLAY */
+/////////////
+function render() {
+    'use strict';
+    renderer.render(scene, current_camera);
+}
+
+////////////////////////////////
+/* INITIALIZE ANIMATION CYCLE */
+////////////////////////////////
+function init() {
+    'use strict';
+    renderer = new THREE.WebGLRenderer({
+        antialias: true
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x87CEEB, 1);
+    document.body.appendChild(renderer.domElement);
+
+    createScene();
+    createCameras();
+
+    render();
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onResize);
+
+    /*grua_in_english = new THREE.Object3D();
+
+    createBase(grua_in_english);
+    scene.add(grua_in_english);
+
+    render();*/
+    
+}
+
+/////////////////////
+/* ANIMATION CYCLE */
+/////////////////////
+function animate() {
+    'use strict';
+
+    render();
+
+    controls.update();
+
+    requestAnimationFrame(animate);
+}
+
+////////////////////////////
+/* RESIZE WINDOW CALLBACK */
+////////////////////////////
 function onResize() {
     'use strict';
 
@@ -111,6 +213,9 @@ function onResize() {
 
 }
 
+///////////////////////
+/* KEY DOWN CALLBACK */
+///////////////////////
 function onKeyDown(e) {
     'use strict';
 
@@ -141,45 +246,11 @@ function onKeyDown(e) {
     }
 }
 
-function render() {
+///////////////////////
+/* KEY UP CALLBACK */
+///////////////////////
+function onKeyUp(e){
     'use strict';
-    renderer.render(scene, current_camera);
-}
-
-function init() {
-    'use strict';
-    renderer = new THREE.WebGLRenderer({
-        antialias: true
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x87CEEB, 1);
-    document.body.appendChild(renderer.domElement);
-
-    createScene();
-    createCameras();
-
-    render();
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("resize", onResize);
-
-    /*grua_in_english = new THREE.Object3D();
-
-    createBase(grua_in_english);
-    scene.add(grua_in_english);
-
-    render();*/
-    
-}
-
-function animate() {
-    'use strict';
-
-    render();
-
-    controls.update();
-
-    requestAnimationFrame(animate);
 }
 
 init();
