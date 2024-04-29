@@ -28,18 +28,10 @@ function createScene() {
 
     scene.add(new THREE.AxesHelper(20));
 
-    geometry = new THREE.BoxGeometry(20, 20, 20);
-    material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: false});
-    var cube = new THREE.Mesh(geometry, material);
+    grua_in_english = new THREE.Object3D();
 
-    var another_geometry = new THREE.SphereGeometry(5, 10, 10);
-    var another_material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: false });
-    var ball = new THREE.Mesh(another_geometry, another_material);
-
-    ball.position.set(10, 0, 0);
-
-    scene.add(cube);
-    scene.add(ball);
+    createBase(grua_in_english);
+    scene.add(grua_in_english);
 }
 
 function createCameras() {
@@ -89,7 +81,22 @@ function createTopPart() {
 }
 
 function createBase(grua) {
-    
+    let geometry = new THREE.BoxGeometry( 3, 4, 6 ); 
+    let material = new THREE.MeshBasicMaterial( {color: 0xFFB100 , wireframe: true}); 
+    let cube = new THREE.Mesh( geometry, material ); 
+    cube.position.set(0, -2, 0);
+    grua.add( cube );
+
+    geometry = new THREE.BoxGeometry( 2, 24, 2 ); 
+    material = new THREE.MeshBasicMaterial( {color: 0xFFB100 , wireframe: true}); 
+    cube = new THREE.Mesh( geometry, material ); 
+    cube.position.set(0, 12, 0);
+    grua.add( cube );
+
+    let topPart = new THREE.Object3D();
+    createTopPart(topPart);
+    topPart.position.set(0,24,0);
+    grua.add(topPart);
 }
 
 function onResize() {
@@ -156,9 +163,12 @@ function init() {
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
 
-    grua_in_english = new THREE.Object3D();
+    /*grua_in_english = new THREE.Object3D();
 
     createBase(grua_in_english);
+    scene.add(grua_in_english);
+
+    render();*/
     
 }
 
