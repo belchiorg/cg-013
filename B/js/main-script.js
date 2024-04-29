@@ -100,6 +100,46 @@ function createCameras() {
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
+function createFinger(claw) {
+    geometry = new THREE.BoxGeometry( 0.2, 0.6, 0.2 );
+    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: false} );
+    top_finger = new THREE.Mesh( geometry, material );
+    finger.position.set(0, -0.3, 0);
+    claw.add(finger);
+}
+
+function createClaw(claw) {
+    geometry = new THREE.BoxGeometry( 1, 0.6, 1 );
+    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: false} );
+    base_garra = new THREE.Mesh( geometry, material );
+    
+    create_finger(claw);
+}
+
+function createCar(car) {
+    geometry = new THREE.BoxGeometry( 2, 1, 1 );
+    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: false} );
+    mesh = new THREE.Mesh( geometry, material );
+
+    car.add(mesh);
+
+    //Add Cables
+    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 8, 32 );
+    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: false} );
+
+    let cable1 = new THREE.Mesh( geometry, material );
+    cable1.position.set(-0.2, -4.5, 0);
+    car.add(cable1);
+
+    let cable2 = new THREE.Mesh( geometry, material );
+    cable2.position.set(0.2, -4.5, 0);
+    car.add(cable2);
+    
+    scene_objects.claw = new THREE.Object3D();
+    createClaw(scene_objects.claw);
+    scene_objects.claw.position.set(0, -0.15, 0);
+}
+
 function createTopPart(topPart) {
 
     // cilindro
