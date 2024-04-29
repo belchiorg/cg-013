@@ -100,8 +100,49 @@ function createCameras() {
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
-function createTopPart() {
+function createTopPart(topPart) {
 
+    // cilindro
+    let geometry = new THREE.CylinderGeometry( 1, 1, 1.4, 32 ); 
+    let material = new THREE.MeshBasicMaterial( {color: 0x006C67, wireframe: true} ); 
+    let cylinder = new THREE.Mesh( geometry, material );
+    cylinder.position.set(0, 0.7, 0);
+    topPart.add( cylinder );
+
+    // cubo
+    geometry = new THREE.BoxGeometry(3,2,2);
+    material = new THREE.MeshBasicMaterial({color: 0x006C67, wireframe: true});
+    cylinder = new THREE.Mesh(geometry, material);
+    cylinder.position.set(0.6,2.4,0);
+    topPart.add(cylinder);
+
+    // mais um cubo
+    geometry = new THREE.BoxGeometry(2,0.4,2);
+    material = new THREE.MeshBasicMaterial({color: 0x006C67, wireframe: true});
+    cylinder = new THREE.Mesh(geometry, material);
+    cylinder.position.set(0,3.6,0);
+    topPart.add(cylinder);
+
+    // piramide quadrangular
+    geometry = new THREE.CylinderGeometry(0,2, 5, 4);
+    material = new THREE.MeshBasicMaterial({color: 0x006C67, wireframe: true});
+    cylinder = new THREE.Mesh( geometry, material );
+    cylinder.position.set(0, 3.8, 0);
+    topPart.add( cylinder );
+
+    // mais um cubo
+    geometry = new THREE.BoxGeometry(10,2,2);
+    material = new THREE.MeshBasicMaterial({color: 0x006C67, wireframe: true});
+    cylinder = new THREE.Mesh(geometry, material);
+    cylinder.position.set(-6,4.8,0);
+    topPart.add(cylinder);
+
+    // mais um cubo
+    geometry = new THREE.BoxGeometry(30,2,2);
+    material = new THREE.MeshBasicMaterial({color: 0x006C67, wireframe: true});
+    cylinder = new THREE.Mesh(geometry, material);
+    cylinder.position.set(16,4.8,0);
+    topPart.add(cylinder);
 }
 
 function createBase(grua) {
@@ -117,10 +158,10 @@ function createBase(grua) {
     cube.position.set(0, 12, 0);
     grua.add( cube );
 
-    let topPart = new THREE.Object3D();
-    createTopPart(topPart);
-    topPart.position.set(0,24,0);
-    grua.add(topPart);
+    scene_objects.top_part = new THREE.Object3D();
+    createTopPart(scene_objects.top_part);
+    scene_objects.top_part.position.set(0,24,0);
+    grua.add(scene_objects.top_part);
 }
 
 
