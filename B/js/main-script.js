@@ -12,6 +12,8 @@ let cameras = {
     orbit_camera: null
 }
 
+let grua_in_english;
+
 let current_camera, scene, renderer;
 
 let controls;
@@ -82,6 +84,13 @@ function createCameras() {
     controls = new OrbitControls( cameras.orbit_camera, renderer.domElement );
 }
 
+function createTopPart() {
+
+}
+
+function createBase(grua) {
+    
+}
 
 function onResize() {
     'use strict';
@@ -146,6 +155,11 @@ function init() {
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
+
+    grua_in_english = new THREE.Object3D();
+
+    createBase(grua_in_english);
+    
 }
 
 function animate() {
