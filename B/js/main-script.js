@@ -23,6 +23,7 @@ let scene_objects = {
     top_part: null,
     car: null,
     claw: null,
+    lower_finger: null,
 }
 
 let current_camera, scene, renderer;
@@ -100,32 +101,60 @@ function createCameras() {
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
-function createFinger(claw) {
-    geometry = new THREE.BoxGeometry( 0.2, 0.6, 0.2 );
-    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: false} );
-    top_finger = new THREE.Mesh( geometry, material );
-    finger.position.set(0, -0.3, 0);
-    claw.add(finger);
+
+function createLowerFinger(lowerFinger){
+    geometry = new THREE.BoxGeometry(0.2,1.2,0.6);
+    material = new THREE.MeshBasicMaterial({color: 0x0000FF, wireframe: true});
+    let lower_finger = new THREE.Mesh(geometry, material);
+    lower_finger.position.set(0,0.6,0);
+    lower_finger.rotation.y = -Math.PI / 4; // TODO: as rotacoes são em eixos diferentes
+    lowerFinger.add(lower_finger);
 }
+
+function createFingers(claw){
+    let fingerParams = [ // tive de ajustar as medidas
+        {position: new THREE.Vector3(-0.85, -0.65, 0), rotation: new THREE.Euler(0, 0, -Math.PI / 4), dimensions: {width: 0.2, height: 1.2, depth: 0.6}},
+        {position: new THREE.Vector3(0.85, -0.65, 0), rotation: new THREE.Euler(0, 0, Math.PI / 4), dimensions: {width: 0.2, height: 1.2, depth: 0.6}},
+        {position: new THREE.Vector3(0, -0.65, -0.85), rotation: new THREE.Euler(Math.PI / 4, 0, 0), dimensions: {width: 0.6, height: 1.2, depth: 0.2}},
+        {position: new THREE.Vector3(0, -0.65, 0.85), rotation: new THREE.Euler(-Math.PI / 4, 0, 0), dimensions: {width: 0.6, height: 1.2, depth: 0.2}}
+    ];
+
+    for (var i = 0; i < fingerParams.length; i++) {
+        geometry = new THREE.BoxGeometry(fingerParams[i].dimensions.width, fingerParams[i].dimensions.height, fingerParams[i].dimensions.depth);
+        material = new THREE.MeshBasicMaterial({color: 0x0000FF, wireframe: true});
+        let finger = new THREE.Mesh(geometry, material);
+        finger.position.copy(fingerParams[i].position);
+        finger.rotation.copy(fingerParams[i].rotation);
+        claw.add(finger);
+
+        /*scene_objects.lower_finger = new THREE.Object3D();
+        createLowerFinger(scene_objects.lower_finger);
+        scene_objects.lower_finger.position.set(-0.46,-0.36,0); // estas medidas estao erradas provavelmente
+        claw.add(scene_objects.lower_finger);*/
+    }
+}
+
 
 function createClaw(claw) {
     geometry = new THREE.BoxGeometry( 1, 0.6, 1 );
-    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: false} );
-    base_garra = new THREE.Mesh( geometry, material );
+    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: true} );
+    let base_garra = new THREE.Mesh( geometry, material );
+
+    claw.add(base_garra)
     
-    create_finger(claw);
+    createFingers(claw);
 }
 
 function createCar(car) {
     geometry = new THREE.BoxGeometry( 2, 1, 1 );
-    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: false} );
+    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: true} );
     mesh = new THREE.Mesh( geometry, material );
 
     car.add(mesh);
 
     //Add Cables
-    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 8, 32 );
-    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: false} );
+    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 8, 32 ); // raio de 0.01 fica melhor
+    material = new THREE.MeshBasicMaterial( {color: 0x0000FF, wireframe: true} );
 
     let cable1 = new THREE.Mesh( geometry, material );
     cable1.position.set(-0.2, -4.5, 0);
@@ -137,7 +166,8 @@ function createCar(car) {
     
     scene_objects.claw = new THREE.Object3D();
     createClaw(scene_objects.claw);
-    scene_objects.claw.position.set(0, -0.15, 0);
+    scene_objects.claw.position.set(0, -8.8, 0); // TODO: esta posicao ta meio confusa
+    car.add(scene_objects.claw);
 }
 
 function createTopPart(topPart) {
@@ -153,7 +183,7 @@ function createTopPart(topPart) {
     geometry = new THREE.BoxGeometry(3,2,2);
     material = new THREE.MeshBasicMaterial({color: 0x006C67, wireframe: true});
     cylinder = new THREE.Mesh(geometry, material);
-    cylinder.position.set(0.6,2.4,0);
+    cylinder.position.set(0.5,2.4,0);
     topPart.add(cylinder);
 
     // mais um cubo
@@ -164,10 +194,11 @@ function createTopPart(topPart) {
     topPart.add(cylinder);
 
     // piramide quadrangular
-    geometry = new THREE.CylinderGeometry(0,2, 5, 4);
+    geometry = new THREE.CylinderGeometry(0,Math.sqrt(2), 5, 4);
     material = new THREE.MeshBasicMaterial({color: 0x006C67, wireframe: true});
     cylinder = new THREE.Mesh( geometry, material );
-    cylinder.position.set(0, 3.8, 0);
+    cylinder.position.set(0, 6.3 , 0);
+    cylinder.rotation.y = Math.PI / 4;
     topPart.add( cylinder );
 
     // mais um cubo
@@ -183,6 +214,12 @@ function createTopPart(topPart) {
     cylinder = new THREE.Mesh(geometry, material);
     cylinder.position.set(16,4.8,0);
     topPart.add(cylinder);
+
+    // adicionar objetos dependentes
+    scene_objects.car = new THREE.Object3D();
+    createCar(scene_objects.car);
+    scene_objects.car.position.set(30,3.3,0);
+    topPart.add(scene_objects.car);
 }
 
 function createBase(grua) {
