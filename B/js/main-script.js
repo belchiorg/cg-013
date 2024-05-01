@@ -102,12 +102,12 @@ function createCameras() {
 /* CREATE OBJECT3D(S) */
 ////////////////////////
 
-function createLowerFinger(lowerFinger){
-    geometry = new THREE.BoxGeometry(0.2,1.2,0.6);
+function createLowerFinger(lowerFinger, dimensions, rotation){
+    geometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.depth);
     material = new THREE.MeshBasicMaterial({color: 0x0000FF, wireframe: true});
     let lower_finger = new THREE.Mesh(geometry, material);
-    lower_finger.position.set(0,0.6,0);
-    lower_finger.rotation.y = -Math.PI / 4; // TODO: as rotacoes são em eixos diferentes
+    lower_finger.position.set(0,0.6,0); // TODO: mudar esta medida provavelmente
+    lower_finger.rotation.copy(rotation);
     lowerFinger.add(lower_finger);
 }
 
@@ -118,6 +118,9 @@ function createFingers(claw){
         {position: new THREE.Vector3(0, -0.65, -0.85), rotation: new THREE.Euler(Math.PI / 4, 0, 0), dimensions: {width: 0.6, height: 1.2, depth: 0.2}},
         {position: new THREE.Vector3(0, -0.65, 0.85), rotation: new THREE.Euler(-Math.PI / 4, 0, 0), dimensions: {width: 0.6, height: 1.2, depth: 0.2}}
     ];
+    let lowerFingerParams = [ // tive de ajustar as medidas
+        new THREE.Vector3(-0.85, -2, 0), new THREE.Vector3(0.85, -2, 0), new THREE.Vector3(0, -2, -0.85), new THREE.Vector3(0, -2, 0.85)
+    ];
 
     for (var i = 0; i < fingerParams.length; i++) {
         geometry = new THREE.BoxGeometry(fingerParams[i].dimensions.width, fingerParams[i].dimensions.height, fingerParams[i].dimensions.depth);
@@ -127,10 +130,10 @@ function createFingers(claw){
         finger.rotation.copy(fingerParams[i].rotation);
         claw.add(finger);
 
-        /*scene_objects.lower_finger = new THREE.Object3D();
-        createLowerFinger(scene_objects.lower_finger);
-        scene_objects.lower_finger.position.set(-0.46,-0.36,0); // estas medidas estao erradas provavelmente
-        claw.add(scene_objects.lower_finger);*/
+        scene_objects.lower_finger = new THREE.Object3D();
+        createLowerFinger(scene_objects.lower_finger, fingerParams[i].dimensions, fingerParams[i % 2 === 0 ? i + 1 : i - 1].rotation);
+        scene_objects.lower_finger.position.copy(lowerFingerParams[i]);
+        claw.add(scene_objects.lower_finger);
     }
 }
 
