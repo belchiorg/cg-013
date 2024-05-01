@@ -57,7 +57,7 @@ function createCameras() {
 
     // Largura e altura da área de visualização
     const aspectRatio = window.innerWidth / window.innerHeight;
-    const viewHeight = 30; // Ajuste conforme necessário
+    const viewHeight = 80; // Ajuste conforme necessário
     const viewWidth = aspectRatio * viewHeight;
 
     cameras.top_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2, 1, 150);
@@ -73,7 +73,7 @@ function createCameras() {
     cameras.front_camera.lookAt(scene.position);
 
     cameras.perspective_camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 150);
-    cameras.perspective_camera.position.set(30, 30, 30);
+    cameras.perspective_camera.position.set(40, 40, 40);
     cameras.perspective_camera.lookAt(scene.position);
 
     cameras.orthographic_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2, 1, 150);
@@ -81,11 +81,11 @@ function createCameras() {
     cameras.orthographic_camera.lookAt(scene.position);
 
     cameras.claw_camera = new THREE.PerspectiveCamera(70, aspectRatio, 1, 150); // Ajuste conforme necessário
-    cameras.claw_camera.position.set(30, 30, 30);
+    cameras.claw_camera.position.set(40, 40, 40);
     cameras.claw_camera.lookAt(scene.position);
 
     cameras.orbit_camera = new THREE.PerspectiveCamera(70, aspectRatio, 1, 300); // Ajuste conforme necessário
-    cameras.orbit_camera.position.set(30, 30, 30);
+    cameras.orbit_camera.position.set(40   , 40, 40);
     cameras.orbit_camera.lookAt(scene.position);
 
     // Define a câmera inicial
