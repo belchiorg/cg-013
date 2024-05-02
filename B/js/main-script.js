@@ -24,6 +24,8 @@ let scene_objects = {
     car: null,
     claw: null,
     lower_finger: [],
+    cable1: null,
+    cable2: null
 }
 
 let current_camera, scene, renderer;
@@ -190,16 +192,18 @@ function createCar(car) {
     car.add(mesh);
 
     //Add Cables
-    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 8, 32 ); // raio de 0.01 fica melhor
+    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 1, 32 ); // raio de 0.01 fica melhor
     material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: false} );
 
-    let cable1 = new THREE.Mesh( geometry, material );
-    cable1.position.set(-0.2, -4.5, 0);
-    car.add(cable1);
+    scene_objects.cable1 = new THREE.Mesh( geometry, material );
+    scene_objects.cable1.position.set(-0.2, -4.5, 0);
+    scene_objects.cable1.scale.y = 8;
+    car.add(scene_objects.cable1);
 
-    let cable2 = new THREE.Mesh( geometry, material );
-    cable2.position.set(0.2, -4.5, 0);
-    car.add(cable2);
+    scene_objects.cable2 = new THREE.Mesh( geometry, material );
+    scene_objects.cable2.position.set(0.2, -4.5, 0);
+    scene_objects.cable2.scale.y = 8;
+    car.add(scene_objects.cable2);
     
     scene_objects.claw = new THREE.Object3D();
     createClaw(scene_objects.claw);
@@ -303,7 +307,6 @@ function update(){
 
     // Update the car position
 
-    console.log(is_car_moving)
     if(is_car_moving !== 0){
         scene_objects.car.position.x += is_car_moving * 0.1;
     }
@@ -316,6 +319,15 @@ function update(){
     // Update the claw position
     if(is_claw_moving !== 0){
         scene_objects.claw.position.y += is_claw_moving * 0.1;
+        let cable1 = scene_objects.cable1;
+        let cable2 = scene_objects.cable2;
+
+        // Update cable so that it still connects the car and the claw
+        cable1.position.y += is_claw_moving * 0.05;
+        cable2.position.y += is_claw_moving * 0.05;
+
+        cable1.scale.y -= is_claw_moving * 0.1;
+        cable2.scale.y -= is_claw_moving * 0.1;
     }
 
     // Update the claw closing
