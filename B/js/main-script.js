@@ -308,7 +308,9 @@ function update(){
     // Update the car position
 
     if(is_car_moving !== 0){
+        if ((scene_objects.car.position.x < 30 && is_car_moving > 0) || (scene_objects.car.position.x > 3 && is_car_moving < 0)){
         scene_objects.car.position.x += is_car_moving * 0.1;
+        }
     }
 
     // Update the top part rotation
@@ -318,6 +320,10 @@ function update(){
 
     // Update the claw position
     if(is_claw_moving !== 0){
+        if ((scene_objects.claw.position.y < -0.9 && is_claw_moving > 0) || is_claw_moving<0){
+        // TODO: mudar os valores para os atributos da grua
+        // TODO: limitar o movimento da garra para nao ir alem do chao
+        // Move the claw
         scene_objects.claw.position.y += is_claw_moving * 0.1;
         let cable1 = scene_objects.cable1;
         let cable2 = scene_objects.cable2;
@@ -327,7 +333,7 @@ function update(){
         cable2.position.y += is_claw_moving * 0.05;
 
         cable1.scale.y -= is_claw_moving * 0.1;
-        cable2.scale.y -= is_claw_moving * 0.1;
+        cable2.scale.y -= is_claw_moving * 0.1;}
     }
 
     // Update the claw closing
