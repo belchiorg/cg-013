@@ -23,7 +23,7 @@ let scene_objects = {
     top_part: null,
     car: null,
     claw: null,
-    lower_finger: null,
+    lower_finger: [],
 }
 
 let current_camera, scene, renderer;
@@ -107,40 +107,69 @@ function createCameras() {
 /* CREATE OBJECT3D(S) */
 ////////////////////////
 
-function createLowerFinger(lowerFinger, dimensions, rotation){
+function createLowerFinger(lowerFinger, dimensions){
     geometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.depth);
-    material = new THREE.MeshBasicMaterial({color: 0x264653, wireframe: true});
+    material = new THREE.MeshBasicMaterial({color: 0x264653, wireframe: false});
     let lower_finger = new THREE.Mesh(geometry, material);
-    lower_finger.position.set(0,0.6,0); // TODO: mudar esta medida provavelmente
-    lower_finger.rotation.copy(rotation);
     lowerFinger.add(lower_finger);
+    lower_finger.position.set(0.55,-0.55,0); // TODO: mudar esta medida provavelmente
+    lower_finger.rotation.z = Math.PI / 4;
 }
 
-function createFingers(claw){
-    let fingerParams = [ // tive de ajustar as medidas
-        {position: new THREE.Vector3(-0.85, -0.65, 0), rotation: new THREE.Euler(0, 0, -Math.PI / 4), dimensions: {width: 0.2, height: 1.2, depth: 0.6}},
-        {position: new THREE.Vector3(0.85, -0.65, 0), rotation: new THREE.Euler(0, 0, Math.PI / 4), dimensions: {width: 0.2, height: 1.2, depth: 0.6}},
-        {position: new THREE.Vector3(0, -0.65, -0.85), rotation: new THREE.Euler(Math.PI / 4, 0, 0), dimensions: {width: 0.6, height: 1.2, depth: 0.2}},
-        {position: new THREE.Vector3(0, -0.65, 0.85), rotation: new THREE.Euler(-Math.PI / 4, 0, 0), dimensions: {width: 0.6, height: 1.2, depth: 0.2}}
-    ];
-    let lowerFingerParams = [ // tive de ajustar as medidas
-        new THREE.Vector3(-0.85, -2, 0), new THREE.Vector3(0.85, -2, 0), new THREE.Vector3(0, -2, -0.85), new THREE.Vector3(0, -2, 0.85)
-    ];
-
-    for (var i = 0; i < fingerParams.length; i++) {
-        geometry = new THREE.BoxGeometry(fingerParams[i].dimensions.width, fingerParams[i].dimensions.height, fingerParams[i].dimensions.depth);
-        material = new THREE.MeshBasicMaterial({color: 0x264653, wireframe: true});
-        let finger = new THREE.Mesh(geometry, material);
-        finger.position.copy(fingerParams[i].position);
-        finger.rotation.copy(fingerParams[i].rotation);
-        claw.add(finger);
-
-        scene_objects.lower_finger = new THREE.Object3D();
-        createLowerFinger(scene_objects.lower_finger, fingerParams[i].dimensions, fingerParams[i % 2 === 0 ? i + 1 : i - 1].rotation);
-        scene_objects.lower_finger.position.copy(lowerFingerParams[i]);
-        claw.add(scene_objects.lower_finger);
+function createFingers(claw) {
+    let fingerParams = {
+        position: new THREE.Vector3(-0.85, -0.65, 0), rotation: new THREE.Euler(0, 0, -Math.PI / 4), dimensions: {width: 0.2, height: 1.2, depth: 0.6},
     }
+
+    let geometry = new THREE.BoxGeometry(fingerParams.dimensions.width, fingerParams.dimensions.height, fingerParams.dimensions.depth);
+    let material = new THREE.MeshBasicMaterial({color: 0x264653, wireframe: true});
+    
+    for (let i = 0; i < 4; i++) {
+        let finger = new THREE.Mesh(geometry, material);
+
+        let fingerContainer = new THREE.Object3D();
+        fingerContainer.add(finger);
+        finger.position.set(fingerParams.position.x, fingerParams.position.y, fingerParams.position.z);
+        finger.rotation.copy(fingerParams.rotation);
+        let lowerFingerContainer = new THREE.Object3D();
+        
+        lowerFingerContainer.position.set(-1.4, -1.1, 0); // TODO: mudar esta medida provavelmente (x e y)
+        createLowerFinger(lowerFingerContainer, fingerParams.dimensions);
+        scene_objects.lower_finger.push(lowerFingerContainer);
+        
+        fingerContainer.rotation.y = Math.PI / 2 * i;
+        claw.add(fingerContainer);
+        fingerContainer.add(scene_objects.lower_finger[i]);
+        
+    }
+    
 }
+
+// function createFingers(claw){
+//     let fingerParams = [ // tive de ajustar as medidas
+//         {position: new THREE.Vector3(-0.85, -0.65, 0), rotation: new THREE.Euler(0, 0, -Math.PI / 4), dimensions: {width: 0.2, height: 1.2, depth: 0.6}},
+//         {position: new THREE.Vector3(0.85, -0.65, 0), rotation: new THREE.Euler(0, 0, Math.PI / 4), dimensions: {width: 0.2, height: 1.2, depth: 0.6}},
+//         {position: new THREE.Vector3(0, -0.65, -0.85), rotation: new THREE.Euler(Math.PI / 4, 0, 0), dimensions: {width: 0.6, height: 1.2, depth: 0.2}},
+//         {position: new THREE.Vector3(0, -0.65, 0.85), rotation: new THREE.Euler(-Math.PI / 4, 0, 0), dimensions: {width: 0.6, height: 1.2, depth: 0.2}}
+//     ];
+//     let lowerFingerParams = [ // tive de ajustar as medidas
+//         new THREE.Vector3(-0.85, -2, 0), new THREE.Vector3(0.85, -2, 0), new THREE.Vector3(0, -2, -0.85), new THREE.Vector3(0, -2, 0.85)
+//     ];
+
+//     for (var i = 0; i < fingerParams.length; i++) {
+//         geometry = new THREE.BoxGeometry(fingerParams[i].dimensions.width, fingerParams[i].dimensions.height, fingerParams[i].dimensions.depth);
+//         material = new THREE.MeshBasicMaterial({color: 0x264653, wireframe: true});
+//         let finger = new THREE.Mesh(geometry, material);
+//         finger.position.copy(fingerParams[i].position);
+//         finger.rotation.copy(fingerParams[i].rotation);
+//         claw.add(finger);
+
+//         scene_objects.lower_finger = new THREE.Object3D();
+//         createLowerFinger(scene_objects.lower_finger, fingerParams[i].dimensions, fingerParams[i % 2 === 0 ? i + 1 : i - 1].rotation);
+//         scene_objects.lower_finger.position.copy(lowerFingerParams[i]);
+//         claw.add(scene_objects.lower_finger);
+//     }
+// }
 
 
 function createClaw(claw) {
@@ -291,7 +320,9 @@ function update(){
 
     // Update the claw closing
     if(is_claw_closing !== 0){
-        scene_objects.claw.rotation.z += is_claw_closing * 0.01;
+        for (let i = 0; i < scene_objects.lower_finger.length; i++) {
+            scene_objects.lower_finger[i].rotation.z += is_claw_closing * 0.01;
+        }
     }
 }
 
