@@ -73,32 +73,32 @@ function createCameras() {
     const viewHeight = 80; // Ajuste conforme necessário
     const viewWidth = aspectRatio * viewHeight;
 
-    cameras.top_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2, 1, 150);
+    cameras.top_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2);
     cameras.top_camera.position.set(0, 30, 0);
     cameras.top_camera.lookAt(scene.position);
 
-    cameras.side_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2, 1, 150);
+    cameras.side_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2);
     cameras.side_camera.position.set(0, 0, 30);
     cameras.side_camera.lookAt(scene.position);
 
-    cameras.front_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2, 1, 150);
+    cameras.front_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2);
     cameras.front_camera.position.set(30, 0, 0);
     cameras.front_camera.lookAt(scene.position);
 
-    cameras.perspective_camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 150);
+    cameras.perspective_camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight);
     cameras.perspective_camera.position.set(40, 40, 40);
     cameras.perspective_camera.lookAt(scene.position);
 
-    cameras.orthographic_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2, 1, 150);
+    cameras.orthographic_camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2);
     cameras.orthographic_camera.position.set(30, 30, 30);
     cameras.orthographic_camera.lookAt(scene.position);
 
-    cameras.claw_camera = new THREE.PerspectiveCamera(70, aspectRatio, 1, 150); // Ajuste conforme necessário
+    cameras.claw_camera = new THREE.PerspectiveCamera(70, aspectRatio); // Ajuste conforme necessário
     scene_objects.claw.add(cameras.claw_camera);
     cameras.claw_camera.position.set(0, -0.65, 0);
     cameras.claw_camera.rotation.x = -Math.PI / 2;
 
-    cameras.orbit_camera = new THREE.PerspectiveCamera(70, aspectRatio, 1, 300); // Ajuste conforme necessário
+    cameras.orbit_camera = new THREE.PerspectiveCamera(70, aspectRatio); // Ajuste conforme necessário
     cameras.orbit_camera.position.set(40, 40, 40);
     cameras.orbit_camera.lookAt(scene.position);
 
@@ -177,7 +177,7 @@ function createCar(car) {
     car.add(mesh);
 
     //Add Cables
-    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 1, 32 ); // raio de 0.01 fica melhor
+    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 1, 8 ); // raio de 0.01 fica melhor
     material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: true} );
 
     scene_objects.cable1 = new THREE.Mesh( geometry, material );
@@ -493,10 +493,10 @@ function onKeyDown(e) {
         
         // R and F keys to close and open the claw
         case 82:
-            is_claw_closing = 1;
+            is_claw_closing = -1;
             break;
         case 70:
-            is_claw_closing = -1;
+            is_claw_closing = 1;
             break;
         
         // key '0' to toggle wireframe
@@ -576,8 +576,8 @@ function createHUD() {
         "A": "Rotate Top Part Clockwise",
         "E": "Move Claw Up",
         "D": "Move Claw Down",
-        "F": "Open Claw",
-        "R": "Close Claw",
+        "R": "Open Claw",
+        "F": "Close Claw",
         "0": "Toggle wireframe"
     };
 
