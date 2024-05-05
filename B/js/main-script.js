@@ -27,6 +27,9 @@ let scene_objects = {
     cable1: null,
     cable2: null
 }
+let keysState = { "1": false,"2": false, "3": false, "4": false, "5": false, "6": false, " ": false, "W": false, "S": false, "Q": false, "A": false, "E": false, "D": false, "R": false, "F": false, "0": false
+};
+let hud, keysMap;
 
 let current_camera, scene, renderer;
 
@@ -37,7 +40,9 @@ let geometry, material, mesh;
 let is_top_rotating = 0;
 let is_car_moving = 0;
 let is_claw_moving = 0;
-let is_claw_closing = 0
+let is_claw_closing = 0;
+let toggle_wireframe = true;
+let toggle_wireframe_changed = false;
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -111,7 +116,7 @@ function createCameras() {
 
 function createLowerFinger(lowerFinger, dimensions){
     geometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.depth);
-    material = new THREE.MeshBasicMaterial({color: 0x264653, wireframe: false});
+    material = new THREE.MeshBasicMaterial({color: 0x264653, wireframe: true});
     let lower_finger = new THREE.Mesh(geometry, material);
     lowerFinger.add(lower_finger);
     lower_finger.position.set(0.55,-0.55,0); // TODO: mudar esta medida provavelmente
@@ -193,7 +198,7 @@ function createCar(car) {
 
     //Add Cables
     geometry = new THREE.CylinderGeometry( 0.1, 0.1, 1, 32 ); // raio de 0.01 fica melhor
-    material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: false} );
+    material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: true} );
 
     scene_objects.cable1 = new THREE.Mesh( geometry, material );
     scene_objects.cable1.position.set(-0.2, -4.5, 0);
@@ -215,14 +220,14 @@ function createTopPart(topPart) {
 
     // cilindro
     let geometry = new THREE.CylinderGeometry( 1, 1, 1.4, 32 ); 
-    let material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: false} ); 
+    let material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: true} ); 
     let cylinder = new THREE.Mesh( geometry, material );
     cylinder.position.set(0, 0.7, 0);
-    topPart.add( cylinder );
+    topPart.add(cylinder);
 
     // cubo
     geometry = new THREE.BoxGeometry(3,2,2);
-    material = new THREE.MeshBasicMaterial({color: 0xEBEBD3, wireframe: false});
+    material = new THREE.MeshBasicMaterial({color: 0xEBEBD3, wireframe: true});
     cylinder = new THREE.Mesh(geometry, material);
     cylinder.position.set(0.5,2.4,0);
     topPart.add(cylinder);
@@ -256,6 +261,29 @@ function createTopPart(topPart) {
     cylinder.position.set(16,4.8,0);
     topPart.add(cylinder);
 
+    // contrapeso
+    geometry = new THREE.BoxGeometry(2,2,2);
+    material = new THREE.MeshBasicMaterial({color: 0xFFB100, wireframe: true});
+    cylinder = new THREE.Mesh(geometry, material);
+    cylinder.position.set(-8,2.8,0);
+    topPart.add(cylinder);
+
+    // tirante
+    geometry = new THREE.CylinderGeometry( 0.01, 0.01, 7.2, 32 );
+    material = new THREE.MeshBasicMaterial( {color: 0x000000, wireframe: true} );
+    cylinder = new THREE.Mesh( geometry, material );
+    cylinder.position.set(-3.3, 7.3, 0); // TODO: corrigir estas medidas
+    cylinder.rotation.z = - Math.PI / 2.7 ;
+    topPart.add(cylinder);
+
+    // tirante 2
+    geometry = new THREE.CylinderGeometry( 0.01, 0.01, 15.9, 32 );
+    material = new THREE.MeshBasicMaterial( {color: 0x000000, wireframe: true} );
+    cylinder = new THREE.Mesh( geometry, material );
+    cylinder.position.set(7.8, 7.3, 0); // TODO: corrigir estas medidas
+    cylinder.rotation.z = Math.PI / 2.25 ;
+    topPart.add(cylinder);
+
     // adicionar objetos dependentes
     scene_objects.car = new THREE.Object3D();
     createCar(scene_objects.car);
@@ -265,7 +293,7 @@ function createTopPart(topPart) {
 
 function createBase(grua) {
     let geometry = new THREE.BoxGeometry( 4, 4, 4 ); 
-    let material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B , wireframe: false}); 
+    let material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B , wireframe: true}); 
     let cube = new THREE.Mesh( geometry, material ); 
     cube.position.set(0, -2, 0);
     grua.add( cube );
@@ -342,6 +370,15 @@ function update(){
             scene_objects.lower_finger[i].rotation.z += is_claw_closing * 0.01;
         }
     }
+
+    // toggle wireframe
+    if (toggle_wireframe_changed){
+        scene.traverse(function(object) {
+            if (object instanceof THREE.Mesh) { // Verifica se o objeto é um mesh
+                object.material.wireframe = toggle_wireframe; // Define o modo de wireframe
+            }
+        });
+    }
 }
 
 /////////////
@@ -366,20 +403,13 @@ function init() {
 
     createScene();
     createCameras();
+    createHUD();
 
     render();
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("resize", onResize);
-
-    /*grua_in_english = new THREE.Object3D();
-
-    createBase(grua_in_english);
-    scene.add(grua_in_english);
-
-    render();*/
-    
+    window.addEventListener("resize", onResize); 
 }
 
 /////////////////////
@@ -417,6 +447,12 @@ function onResize() {
 ///////////////////////
 function onKeyDown(e) {
     'use strict';
+    
+    const key = e.key.toUpperCase();
+    if (keysState[key] !== undefined) {
+        keysState[key] = true;
+        updateHUD();
+    }
 
     //Keys from 1 to 6 change the camera 
     switch (e.keyCode) {
@@ -474,6 +510,12 @@ function onKeyDown(e) {
         case 70:
             is_claw_closing = -1;
             break;
+        
+        // key '0' to toggle wireframe
+        case 48:
+            toggle_wireframe = !toggle_wireframe;
+            toggle_wireframe_changed = true;
+            break;
     }
 }
 
@@ -482,6 +524,12 @@ function onKeyDown(e) {
 ///////////////////////
 function onKeyUp(e){
     'use strict';
+
+    const key = e.key.toUpperCase();
+    if (keysState[key] !== undefined) {
+        keysState[key] = false;
+        updateHUD();
+    }
 
     switch (e.keyCode) {
         case 87:
@@ -508,6 +556,52 @@ function onKeyUp(e){
         case 70:
             is_claw_closing = 0;
             break;
+    }
+}
+
+function createHUD() {
+    hud = document.createElement('div');
+    hud.id = 'hud';
+    hud.style.position = 'absolute';
+    hud.style.top = '10px';
+    hud.style.left = '10px';
+    hud.style.padding = '10px';
+    hud.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    hud.style.border = '1px solid black';
+    hud.style.fontFamily = 'Arial';
+    hud.style.fontSize = '13px';
+    hud.style.color = 'white';
+    document.body.appendChild(hud);
+
+    // Mapeamento das teclas para exibição no HUD
+    keysMap = {
+        "1": "Top Camera",
+        "2": "Side Camera",
+        "3": "Front Camera",
+        "4": "Perspective Camera",
+        "5": "Orthographic Camera",
+        "6": "Claw Camera",
+        " ": "Orbit Controls",
+        "W": "Move Car Forward",
+        "S": "Move Car Backward",
+        "Q": "Rotate Top Part Counter Clockwise",
+        "A": "Rotate Top Part Clockwise",
+        "E": "Move Claw Up",
+        "D": "Move Claw Down",
+        "F": "Open Claw",
+        "R": "Close Claw",
+        "0": "Toggle wireframe"
+    };
+
+    updateHUD();
+}
+
+function updateHUD() {
+    hud.innerHTML = '';
+    for (const key in keysMap) {
+        const keyDiv = document.createElement('div');
+        keyDiv.textContent = keysMap[key] + (keysState[key] ? ' [Active]' : '');
+        hud.appendChild(keyDiv);
     }
 }
 
