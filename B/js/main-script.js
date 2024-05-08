@@ -26,7 +26,8 @@ let scene_objects = {
     lower_finger: [],
     cable1: null,
     cable2: null,
-    containers: []
+    container: null,
+    cargas: []
 }
 let keysState = { "1": false,"2": false, "3": false, "4": false, "5": false, "6": false, " ": false, "W": false, "S": false, "Q": false, "A": false, "E": false, "D": false, "R": false, "F": false, "0": false
 };
@@ -59,6 +60,8 @@ function createScene() {
     scene_objects.grua_in_english = new THREE.Object3D();
 
     createBase(scene_objects.grua_in_english);
+    createContentor();
+    createContentorCargas();
     scene.add(scene_objects.grua_in_english);
 }
 
@@ -288,6 +291,75 @@ function createBase(grua) {
     createTopPart(scene_objects.top_part);
     scene_objects.top_part.position.set(0,24,0);
     grua.add(scene_objects.top_part);
+}
+
+function createContentor() {
+
+    scene_objects.container = new THREE.Object3D();
+
+    let geometry = new THREE.PlaneGeometry(5, 10);
+    let material = new THREE.MeshBasicMaterial( {color: 0x000000, wireframe: true});
+    let rectangle = new THREE.Mesh(geometry, material);
+    rectangle.rotation.set(-Math.PI / 2, 0, 0);
+    rectangle.position.set(0, -2.5, 0);
+    scene_objects.container.add(rectangle);
+
+    geometry = new THREE.PlaneGeometry(5, 5);
+    material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
+    rectangle = new THREE.Mesh(geometry, material);
+    rectangle.rotation.set(0, 0, 0);
+    rectangle.position.set(0, 0, 5);
+    scene_objects.container.add(rectangle);
+
+    geometry = new THREE.PlaneGeometry(10, 5);
+    material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
+    rectangle = new THREE.Mesh(geometry, material);
+    rectangle.rotation.set(0, Math.PI / 2, 0);
+    rectangle.position.set(-2.5, 0, 0);
+    scene_objects.container.add(rectangle);
+
+    geometry = new THREE.PlaneGeometry(10, 5);
+    material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
+    rectangle = new THREE.Mesh(geometry, material);
+    rectangle.rotation.set(0, Math.PI / 2, 0);
+    rectangle.position.set(2.5, 0, 0);
+    scene_objects.container.add(rectangle);
+
+    geometry = new THREE.PlaneGeometry(5, 5);
+    material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
+    rectangle = new THREE.Mesh(geometry, material);
+    rectangle.rotation.set(0, 0, 0);
+    rectangle.position.set(0, 0, -5);
+    scene_objects.container.add(rectangle);
+
+    scene_objects.container.position.set(25, 2.5, 5); // TODO: posicionar isto melhor (ou corretamente)
+    scene.add(scene_objects.container);
+}
+
+function createContentorCargas() {
+    let geometry = new THREE.DodecahedronGeometry(2, 1);
+    let material = new THREE.MeshBasicMaterial( { color: 0x0000AA, wireframe: true } );
+
+    var carga1 = new THREE.Mesh(geometry, material);
+    carga1.position.set(21, 2, 26);
+    scene.add(carga1);
+
+    geometry = new THREE.IcosahedronGeometry(2, 0);
+    var carga2 = new THREE.Mesh(geometry, material);
+    carga2.position.set(-16, 2, 24);
+    scene.add(carga2);
+
+    geometry = new THREE.TorusGeometry(1, 0.3);
+    var carga3 = new THREE.Mesh(geometry, material);
+    carga3.position.set(12, 2, -28);
+    scene.add(carga3);
+
+    geometry = new THREE.TorusKnotGeometry( 1, 0.2, 100, 2 );
+    var carga4 = new THREE.Mesh(geometry, material);
+    carga4.position.set(-25, 2, -6);
+    scene.add(carga4);
+
+    scene_objects.cargas = [carga1, carga2, carga3, carga4];
 }
 
 
