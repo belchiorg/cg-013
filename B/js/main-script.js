@@ -29,8 +29,10 @@ let scene_objects = {
     container: null,
     cargas: []
 }
+
 let keysState = { "1": false,"2": false, "3": false, "4": false, "5": false, "6": false, " ": false, "W": false, "S": false, "Q": false, "A": false, "E": false, "D": false, "R": false, "F": false, "0": false
 };
+
 let hud, keysMap;
 
 let current_camera, scene, renderer;
@@ -46,8 +48,22 @@ let is_claw_closing = 0;
 let toggle_wireframe = true;
 let toggle_wireframe_changed = false;
 
-let is_colliding = false;
+let is_colliding = -1;
 let esfera_garra, esfera_cargas=[];
+
+let is_animating = false;
+
+let clock = new THREE.Clock(true);
+
+let animation_state = {
+    "grabbing": false,
+    "lifting": false,
+    "rotating": false,
+    "centering": false, //car should be centered with the container
+    "lowering": false,
+    "releasing": false,
+    "resetting": false
+}
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -155,6 +171,7 @@ function createFingers(claw) {
         
         lowerFingerContainer.position.set(-1.4, -1.1, 0); // TODO: mudar esta medida provavelmente (x e y)
         createLowerFinger(lowerFingerContainer, fingerParams.dimensions);
+        lowerFingerContainer.rotation.z = - Math.PI / 2;
         scene_objects.lower_finger.push(lowerFingerContainer);
         
         fingerContainer.rotation.y = Math.PI / 2 * i;
@@ -300,42 +317,36 @@ function createContentor() {
 
     scene_objects.container = new THREE.Object3D();
 
-    let geometry = new THREE.PlaneGeometry(5, 10);
-    let material = new THREE.MeshBasicMaterial( {color: 0x000000, wireframe: true});
-    let rectangle = new THREE.Mesh(geometry, material);
-    rectangle.rotation.set(-Math.PI / 2, 0, 0);
-    rectangle.position.set(0, -2.5, 0);
-    scene_objects.container.add(rectangle);
+    scene_objects.container.position.set(0, 0, -25);
 
-    geometry = new THREE.PlaneGeometry(5, 5);
     material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
-    rectangle = new THREE.Mesh(geometry, material);
-    rectangle.rotation.set(0, 0, 0);
-    rectangle.position.set(0, 0, 5);
-    scene_objects.container.add(rectangle);
 
-    geometry = new THREE.PlaneGeometry(10, 5);
-    material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
-    rectangle = new THREE.Mesh(geometry, material);
-    rectangle.rotation.set(0, Math.PI / 2, 0);
-    rectangle.position.set(-2.5, 0, 0);
-    scene_objects.container.add(rectangle);
+    geometry = new THREE.BoxGeometry( 0.5, 10, 20 );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(5, 0, 0);
+    scene_objects.container.add(mesh);
+    
+    geometry = new THREE.BoxGeometry( 10, 10, 0.5 );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(0, 0, 10);
+    scene_objects.container.add(mesh);
 
-    geometry = new THREE.PlaneGeometry(10, 5);
-    material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
-    rectangle = new THREE.Mesh(geometry, material);
-    rectangle.rotation.set(0, Math.PI / 2, 0);
-    rectangle.position.set(2.5, 0, 0);
-    scene_objects.container.add(rectangle);
+    geometry = new THREE.BoxGeometry( 10, 10, 0.5 );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(0, 0, -10);
+    scene_objects.container.add(mesh);
 
-    geometry = new THREE.PlaneGeometry(5, 5);
-    material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
-    rectangle = new THREE.Mesh(geometry, material);
-    rectangle.rotation.set(0, 0, 0);
-    rectangle.position.set(0, 0, -5);
-    scene_objects.container.add(rectangle);
+    geometry = new THREE.BoxGeometry( 0.5, 10, 20 );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(-5, 0, 0);
+    scene_objects.container.add(mesh);
 
-    scene_objects.container.position.set(25, 2.5, 5); // TODO: posicionar isto melhor (ou corretamente)
+    //floor
+    geometry = new THREE.BoxGeometry( 10, 0.5, 20 );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(0, -5, 0);
+    scene_objects.container.add(mesh);
+
     scene.add(scene_objects.container);
 }
 
@@ -343,30 +354,15 @@ function createCargas() {
     let geometry = new THREE.DodecahedronGeometry(2, 1);
     let material = new THREE.MeshBasicMaterial( { color: 0x0000AA, wireframe: true } );
 
-    var carga1 = new THREE.Mesh(geometry, material);
-    carga1.position.set(21, 2, 26);
-    scene.add(carga1);
-    esfera_cargas[0] = new THREE.Box3().setFromObject(carga1);
+    const geometries = [new THREE.DodecahedronGeometry(2, 1), new THREE.IcosahedronGeometry(2, 0), new THREE.TorusGeometry(1, 0.3), new THREE.TorusKnotGeometry( 1, 0.2, 100, 2 )]
 
-    geometry = new THREE.IcosahedronGeometry(2, 0);
-    var carga2 = new THREE.Mesh(geometry, material);
-    carga2.position.set(-16, 2, 24);
-    scene.add(carga2);
-    esfera_cargas[1] = new THREE.Box3().setFromObject(carga2);
-
-    geometry = new THREE.TorusGeometry(1, 0.3);
-    var carga3 = new THREE.Mesh(geometry, material);
-    carga3.position.set(12, 2, -28);
-    scene.add(carga3);
-    esfera_cargas[2] = new THREE.Box3().setFromObject(carga3);
-
-    geometry = new THREE.TorusKnotGeometry( 1, 0.2, 100, 2 );
-    var carga4 = new THREE.Mesh(geometry, material);
-    carga4.position.set(-25, 2, -6);
-    scene.add(carga4);
-    esfera_cargas[3] = new THREE.Box3().setFromObject(carga4);
-
-    scene_objects.cargas = [carga1, carga2, carga3, carga4];
+    for (let i = 0; i < 4; i++){
+        let carga = new THREE.Mesh(geometries[i], material);
+        carga.position.set((Math.random() * 40 - 20), 2, (Math.random() * 40 - 20));
+        scene.add(carga);
+        scene_objects.cargas.push(carga);
+        esfera_cargas.push(new THREE.Box3().setFromObject(carga));
+    }
 }
 
 
@@ -377,12 +373,11 @@ function checkCollisions(){
     'use strict';
     //check if the finger is colliding with a box
     esfera_garra.setFromObject(scene_objects.claw);
+    is_colliding = -1;
     for (var i = 0; i < 4; i++){
         esfera_cargas[i].setFromObject(scene_objects.cargas[i]);
         if (esfera_garra.intersectsBox(esfera_cargas[i])) {
-            is_colliding = true;
-            console.log("sssssssss");
-            break;
+            is_colliding = i;
         }
     }
 }
@@ -392,7 +387,11 @@ function checkCollisions(){
 ///////////////////////
 function handleCollisions(){
     'use strict';
-
+    console.log("Colliding with box " + is_colliding);
+    is_animating = true;
+    scene_objects.cargas[is_colliding].position.set(0,-3,0);
+    scene_objects.claw.add(scene_objects.cargas[is_colliding])
+    animation_state.grabbing = true;
 }
 
 ////////////
@@ -401,35 +400,36 @@ function handleCollisions(){
 function update(){
     'use strict';
 
+    let delta = clock.getDelta();
+
     // Update the car position
 
     if(is_car_moving !== 0){
         if ((scene_objects.car.position.x < 30 && is_car_moving > 0) || (scene_objects.car.position.x > 3 && is_car_moving < 0)){
-        scene_objects.car.position.x += is_car_moving * 0.1;
+        scene_objects.car.position.x += is_car_moving * delta * 10;
         }
     }
 
     // Update the top part rotation
     if(is_top_rotating !== 0){
-        scene_objects.top_part.rotation.y += is_top_rotating * 0.01;
+        scene_objects.top_part.rotation.y += is_top_rotating * delta;
     }
 
     // Update the claw position
     if(is_claw_moving !== 0){
-        if ((scene_objects.claw.position.y < -0.9 && is_claw_moving > 0) || is_claw_moving<0){
-        // TODO: mudar os valores para os atributos da grua
-        // TODO: limitar o movimento da garra para nao ir alem do chao
-        // Move the claw
-        scene_objects.claw.position.y += is_claw_moving * 0.1;
+        if ((scene_objects.claw.position.y < -0.9 && is_claw_moving > 0) || ( scene_objects.claw.position.y > -25 && is_claw_moving<0 && is_colliding < 0)){
+
+        scene_objects.claw.position.y += is_claw_moving * delta *10;
         let cable1 = scene_objects.cable1;
         let cable2 = scene_objects.cable2;
 
         // Update cable so that it still connects the car and the claw
-        cable1.position.y += is_claw_moving * 0.05;
-        cable2.position.y += is_claw_moving * 0.05;
+        cable1.position.y += is_claw_moving * delta/2 *10;
+        cable2.position.y += is_claw_moving * delta/2 *10 ;
 
-        cable1.scale.y -= is_claw_moving * 0.1;
-        cable2.scale.y -= is_claw_moving * 0.1;}
+        cable1.scale.y -= is_claw_moving * delta *10;
+        cable2.scale.y -= is_claw_moving * delta*10;
+        }
     }
 
     // Update the claw closing
@@ -437,9 +437,15 @@ function update(){
     
     // should only rotate around the max and min values of rotation (between 0 and PI)
     if(is_claw_closing !== 0){
-        if ((is_claw_closing > 0 && claw_rotation < 0) || (is_claw_closing < 0 && claw_rotation > -Math.PI / 2)){
+        if (is_claw_closing > 0 && claw_rotation < 0){
+            if (is_colliding >= 0) handleCollisions();
             scene_objects.lower_finger.forEach(function(finger){
-                finger.rotation.z += is_claw_closing * 0.01;
+                finger.rotation.z += is_claw_closing * delta;
+            });
+        }
+        else if (is_claw_closing < 0 && claw_rotation > -Math.PI / 2){
+            scene_objects.lower_finger.forEach(function(finger){
+                finger.rotation.z += is_claw_closing * delta;
             });
         }
     }
@@ -454,8 +460,108 @@ function update(){
     }
 
     checkCollisions();
-    if (is_colliding){
-        handleCollisions();
+}
+
+function updateAnimation(){
+    let delta = clock.getDelta();
+    //Should make an animation of grabbing the box, lift it, rotate to where the container is, lower the box and release it
+    if (animation_state.grabbing){
+        //Should animate the claw closing
+        scene_objects.lower_finger.forEach(function(finger){
+            finger.rotation.z += delta;
+        });
+        if (scene_objects.lower_finger[0].rotation.z >= 0){
+            animation_state.grabbing = false;
+            animation_state.lifting = true;
+        }
+    }
+    else if (animation_state.lifting){
+        //Should animate the claw moving up
+        scene_objects.claw.position.y += delta *10;
+        let cable1 = scene_objects.cable1;
+        let cable2 = scene_objects.cable2;
+
+        // Update cable so that it still connects the car and the claw
+        cable1.position.y += delta/2 *10;
+        cable2.position.y += delta/2 *10 ;
+
+        cable1.scale.y -= delta *10;
+        cable2.scale.y -= delta*10;
+
+        if (scene_objects.claw.position.y >= -0.9){
+            animation_state.lifting = false;
+            animation_state.rotating = true;
+        }
+    }
+    else if (animation_state.rotating){
+        //Should animate the top part rotating to where the container is
+        scene_objects.top_part.rotation.y += delta;
+        scene_objects.top_part.rotation.y = scene_objects.top_part.rotation.y % (2 * Math.PI);
+        if (scene_objects.top_part.rotation.y >= Math.PI/2 -0.01 && scene_objects.top_part.rotation.y <= Math.PI/2 + 0.01){
+            animation_state.rotating = false;
+            animation_state.centering = true;
+        }
+    }
+    else if (animation_state.centering){
+        //Should animate the car moving to the center of the container
+        if (scene_objects.car.position.x < 24.9){
+            scene_objects.car.position.x += delta *10;
+        }
+        else if (scene_objects.car.position.x > 25.1){
+            scene_objects.car.position.x -= delta *10;
+        }
+        else{
+            animation_state.centering = false;
+            animation_state.lowering = true;
+        }
+    }
+    else if (animation_state.lowering){
+        //Should animate the claw moving down
+        scene_objects.claw.position.y -= delta *10;
+        let cable1 = scene_objects.cable1;
+        let cable2 = scene_objects.cable2;
+
+        // Update cable so that it still connects the car and the claw
+        cable1.position.y -= delta/2 *10;
+        cable2.position.y -= delta/2 *10 ;
+
+        cable1.scale.y += delta *10;
+        cable2.scale.y += delta*10;
+
+        if (scene_objects.claw.position.y <= -25){
+            animation_state.lowering = false;
+            animation_state.releasing = true;
+        }
+    }
+    else if (animation_state.releasing){
+        //Should animate the claw opening
+        scene_objects.lower_finger.forEach(function(finger){
+            finger.rotation.z -= delta;
+        });
+        if (scene_objects.lower_finger[0].rotation.z <= -Math.PI / 2){
+            animation_state.releasing = false;
+            animation_state.resetting = true
+            scene_objects.claw.remove(scene_objects.cargas[is_colliding]);
+            scene_objects.container.add(scene_objects.cargas[is_colliding]);
+        }
+    }
+    else if (animation_state.resetting){
+        //just lifts a little bit the claw
+        scene_objects.claw.position.y += delta *10;
+        let cable1 = scene_objects.cable1;
+        let cable2 = scene_objects.cable2;
+
+        // Update cable so that it still connects the car and the claw
+        cable1.position.y += delta/2 *10;
+        cable2.position.y += delta/2 *10 ;
+        
+        cable1.scale.y -= delta *10;
+        cable2.scale.y -= delta*10;
+        if (scene_objects.claw.position.y >= -10){
+            animation_state.resetting = false;
+            is_animating = false;
+            is_colliding = -1;
+        }
     }
 }
 
@@ -496,7 +602,11 @@ function init() {
 function animate() {
     'use strict';
 
-    update();
+    if (!is_animating) {
+        update();
+    } else {
+        updateAnimation();
+    }
 
     render();
 
