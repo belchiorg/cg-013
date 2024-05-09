@@ -46,6 +46,9 @@ let is_claw_closing = 0;
 let toggle_wireframe = true;
 let toggle_wireframe_changed = false;
 
+let is_colliding = false;
+let esfera_garra, esfera_cargas=[];
+
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -61,7 +64,7 @@ function createScene() {
 
     createBase(scene_objects.grua_in_english);
     createContentor();
-    createContentorCargas();
+    createCargas();
     scene.add(scene_objects.grua_in_english);
 }
 
@@ -168,8 +171,8 @@ function createClaw(claw) {
     let base_garra = new THREE.Mesh( geometry, material );
 
     claw.add(base_garra)
-    
     createFingers(claw);
+    esfera_garra = new THREE.Box3().setFromObject(claw);
 }
 
 function createCar(car) {
@@ -336,28 +339,32 @@ function createContentor() {
     scene.add(scene_objects.container);
 }
 
-function createContentorCargas() {
+function createCargas() {
     let geometry = new THREE.DodecahedronGeometry(2, 1);
     let material = new THREE.MeshBasicMaterial( { color: 0x0000AA, wireframe: true } );
 
     var carga1 = new THREE.Mesh(geometry, material);
     carga1.position.set(21, 2, 26);
     scene.add(carga1);
+    esfera_cargas[0] = new THREE.Box3().setFromObject(carga1);
 
     geometry = new THREE.IcosahedronGeometry(2, 0);
     var carga2 = new THREE.Mesh(geometry, material);
     carga2.position.set(-16, 2, 24);
     scene.add(carga2);
+    esfera_cargas[1] = new THREE.Box3().setFromObject(carga2);
 
     geometry = new THREE.TorusGeometry(1, 0.3);
     var carga3 = new THREE.Mesh(geometry, material);
     carga3.position.set(12, 2, -28);
     scene.add(carga3);
+    esfera_cargas[2] = new THREE.Box3().setFromObject(carga3);
 
     geometry = new THREE.TorusKnotGeometry( 1, 0.2, 100, 2 );
     var carga4 = new THREE.Mesh(geometry, material);
     carga4.position.set(-25, 2, -6);
     scene.add(carga4);
+    esfera_cargas[3] = new THREE.Box3().setFromObject(carga4);
 
     scene_objects.cargas = [carga1, carga2, carga3, carga4];
 }
@@ -368,10 +375,16 @@ function createContentorCargas() {
 //////////////////////
 function checkCollisions(){
     'use strict';
-
     //check if the finger is colliding with a box
-
-
+    esfera_garra.setFromObject(scene_objects.claw);
+    for (var i = 0; i < 4; i++){
+        esfera_cargas[i].setFromObject(scene_objects.cargas[i]);
+        if (esfera_garra.intersectsBox(esfera_cargas[i])) {
+            is_colliding = true;
+            console.log("sssssssss");
+            break;
+        }
+    }
 }
 
 ///////////////////////
@@ -438,6 +451,11 @@ function update(){
                 object.material.wireframe = toggle_wireframe; // Define o modo de wireframe
             }
         });
+    }
+
+    checkCollisions();
+    if (is_colliding){
+        handleCollisions();
     }
 }
 
