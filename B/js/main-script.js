@@ -167,7 +167,7 @@ function createFingers(claw) {
         finger.rotation.copy(fingerParams.rotation);
         let lowerFingerContainer = new THREE.Object3D();
         
-        lowerFingerContainer.position.set(-1.4, -1.1, 0); // TODO: mudar esta medida provavelmente (x e y)
+        lowerFingerContainer.position.set(-1.4, -1.1, 0);
         createLowerFinger(lowerFingerContainer, fingerParams.dimensions);
         lowerFingerContainer.rotation.z = - Math.PI / 2;
         scene_objects.lower_finger.push(lowerFingerContainer);
@@ -273,7 +273,7 @@ function createTopPart(topPart) {
     geometry = new THREE.CylinderGeometry( 0.01, 0.01, 7.2, 32 );
     material = new THREE.MeshBasicMaterial( {color: 0x000000, wireframe: true} );
     cylinder = new THREE.Mesh( geometry, material );
-    cylinder.position.set(-3.3, 7.3, 0); // TODO: corrigir estas medidas
+    cylinder.position.set(-3.3, 7.3, 0);
     cylinder.rotation.z = - Math.PI / 2.7 ;
     topPart.add(cylinder);
 
@@ -281,7 +281,7 @@ function createTopPart(topPart) {
     geometry = new THREE.CylinderGeometry( 0.01, 0.01, 15.9, 32 );
     material = new THREE.MeshBasicMaterial( {color: 0x000000, wireframe: true} );
     cylinder = new THREE.Mesh( geometry, material );
-    cylinder.position.set(7.8, 7.3, 0); // TODO: corrigir estas medidas
+    cylinder.position.set(7.8, 7.3, 0);
     cylinder.rotation.z = Math.PI / 2.25 ;
     topPart.add(cylinder);
 
