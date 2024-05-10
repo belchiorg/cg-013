@@ -717,19 +717,19 @@ function onKeyDown(e) {
     //Keys from 1 to 6 change the camera 
     switch (e.keyCode) {
         case 49:
-            current_camera = cameras.top_camera;
+            current_camera = cameras.front_camera;
             break;
         case 50:
             current_camera = cameras.side_camera;
             break;
         case 51:
-            current_camera = cameras.front_camera;
+            current_camera = cameras.top_camera;
             break;
         case 52:
-            current_camera = cameras.perspective_camera;
+            current_camera = cameras.orthographic_camera;
             break;
         case 53:
-            current_camera = cameras.orthographic_camera;
+            current_camera = cameras.perspective_camera;
             break;
         case 54:
             current_camera = cameras.claw_camera;
@@ -826,7 +826,7 @@ function createHUD() {
     hud.style.top = '10px';
     hud.style.left = '10px';
     hud.style.padding = '10px';
-    hud.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    hud.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
     hud.style.border = '1px solid black';
     hud.style.fontFamily = 'Arial';
     hud.style.fontSize = '13px';
@@ -861,6 +861,9 @@ function updateHUD() {
     for (const key in keysMap) {
         const keyDiv = document.createElement('div');
         keyDiv.textContent = keysMap[key] + (keysState[key] ? ' [Active]' : '');
+        if (keysState[key]) {
+            keyDiv.style.color = 'green'; // Change color to green when active
+        }
         hud.appendChild(keyDiv);
     }
 }
