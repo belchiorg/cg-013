@@ -834,11 +834,11 @@ function createHUD() {
 
     // Mapeamento das teclas para exibição no HUD
     keysMap = {
-        "1": "Top Camera (1)",
+        "1": "Front Camera (1)",
         "2": "Side Camera (2)",
-        "3": "Front Camera (3)",
-        "4": "Perspective Camera (4)",
-        "5": "Orthographic Camera (5)",
+        "3": "Top Camera (3)",
+        "4": "Orthographic Camera (4)",
+        "5": "Perspective Camera (5)",
         "6": "Claw Camera (6)",
         " ": "Orbit Controls (space)",
         "W": "Move Car Forward (W)",
