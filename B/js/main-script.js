@@ -317,7 +317,7 @@ function createContentor() {
 
     scene_objects.container = new THREE.Object3D();
 
-    scene_objects.container.position.set(0, 0, -25);
+    scene_objects.container.position.set(0, 5, -25);
 
     material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
 
@@ -343,6 +343,7 @@ function createContentor() {
 
     //floor
     geometry = new THREE.BoxGeometry( 10, 0.5, 20 );
+    material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: true});
     mesh = new THREE.Mesh( geometry, material );
     mesh.position.set(0, -5, 0);
     scene_objects.container.add(mesh);
@@ -528,7 +529,7 @@ function updateAnimation(){
         cable1.scale.y += delta *10;
         cable2.scale.y += delta*10;
 
-        if (scene_objects.claw.position.y <= -25){
+        if (scene_objects.claw.position.y <= -22){
             animation_state.lowering = false;
             animation_state.releasing = true;
         }
