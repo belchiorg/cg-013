@@ -354,7 +354,10 @@ function createContentor() {
 
 function createCargas() {
     const geometries = [ new THREE.DodecahedronGeometry(2, 1), new THREE.IcosahedronGeometry(2, 0), new THREE.TorusGeometry(1, 0.3), new THREE.TorusKnotGeometry(1, 0.2, 100, 2) ];
-    let material = new THREE.MeshBasicMaterial({ color: 0x0000AA, wireframe: true });
+    const material = new THREE.MeshBasicMaterial({ color: 0x0000AA, wireframe: true });
+
+    const contentorBoundingBox = new THREE.Box3().setFromObject(scene_objects.container);
+    const baseBoundingBox = new THREE.Box3( new THREE.Vector3(-1, 0, -1), new THREE.Vector3(1, 24, 1));
 
     for (let i = 0; i < 4; i++) {
         let carga;
@@ -369,17 +372,21 @@ function createCargas() {
             carga.position.copy(position);
             const cargaBoundingBox = new THREE.Box3().setFromObject(carga);
 
-            // verificar se colide com outra carga
+            // verificar se ha colisoes
             let collides = false;
-            for (const existingCarga of scene_objects.cargas) {
-                const existingCargaBoundingBox = new THREE.Box3().setFromObject(existingCarga);
-                if (existingCargaBoundingBox.intersectsBox(cargaBoundingBox)) {
-                    collides = true;
-                    break;
+            if (contentorBoundingBox.intersectsBox(cargaBoundingBox) || baseBoundingBox.intersectsBox(cargaBoundingBox)) {
+                collides = true;
+            } else {
+                for (const existingCarga of scene_objects.cargas) {
+                    const existingCargaBoundingBox = new THREE.Box3().setFromObject(existingCarga);
+                    if (existingCargaBoundingBox.intersectsBox(cargaBoundingBox)) {
+                        collides = true;
+                        break;
+                    }
                 }
             }
 
-            // If there's a collision, adjust position and continue
+            // ha colisao --> mudar posicao da carga
             if (collides) {
                 carga.position.set(
                     Math.random() * 40 - 20,
