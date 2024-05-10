@@ -30,11 +30,8 @@ let scene_objects = {
     cargas: []
 }
 
-let keysState = { "1": false,"2": false, "3": false, "4": false, "5": false, "6": false, " ": false, "W": false, "S": false, "Q": false, "A": false, "E": false, "D": false, "R": false, "F": false, "0": true
+let hud, keysMap, cameraKeys = ["1","2","3","4","5","6"," "], keysState = { "1": false,"2": false, "3": false, "4": false, "5": false, "6": false, " ": false, "W": false, "S": false, "Q": false, "A": false, "E": false, "D": false, "R": false, "F": false, "0": true
 };
-let cameraKeys = ["1","2","3","4","5","6"," "];
-
-let hud, keysMap;
 
 let current_camera, scene, renderer;
 
@@ -144,7 +141,7 @@ function createLowerFinger(lowerFinger, dimensions){
     material = new THREE.MeshBasicMaterial({color: 0x264653, wireframe: true});
     let lower_finger = new THREE.Mesh(geometry, material);
     lowerFinger.add(lower_finger);
-    lower_finger.position.set(0.55,-0.55,0); // TODO: mudar esta medida provavelmente
+    lower_finger.position.set(0.55,-0.55,0);
     lower_finger.rotation.z = Math.PI / 4;
     geometry = new THREE.CylinderGeometry(0.18, 0.18, 0.65, 8);
     material = new THREE.MeshBasicMaterial({color: 0x3C3C3B, wireframe: true});
@@ -201,7 +198,7 @@ function createCar(car) {
     car.add(mesh);
 
     //Add Cables
-    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 1, 8 ); // raio de 0.01 fica melhor
+    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 1, 8 );
     material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: true} );
 
     scene_objects.cable1 = new THREE.Mesh( geometry, material );
@@ -216,7 +213,7 @@ function createCar(car) {
     
     scene_objects.claw = new THREE.Object3D();
     createClaw(scene_objects.claw);
-    scene_objects.claw.position.set(0, -8.8, 0); // TODO: esta posicao ta meio confusa
+    scene_objects.claw.position.set(0, -8.8, 0);
     car.add(scene_objects.claw);
 }
 
