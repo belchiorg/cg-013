@@ -38,6 +38,10 @@ let controls;
 
 let geometry, material, mesh;
 
+let container;
+
+let loads = [];
+
 let is_top_rotating = 0;
 let is_car_moving = 0;
 let is_claw_moving = 0;
@@ -290,6 +294,31 @@ function createBase(grua) {
     grua.add(scene_objects.top_part);
 }
 
+/////////////////////
+/* CREATE CONTAINER */
+/////////////////////
+function createContainer() {
+    let geometry = new THREE.BoxGeometry( 5, 5, 5 );
+    let material = new THREE.MeshBasicMaterial( {color: 0x00FF00} );
+    let container = new THREE.Mesh( geometry, material );
+    container.position.set((Math.random()+0.5) *20 , (Math.random()) , (Math.random()) );
+    scene.add( container );
+    scene_objects.containers.push(container);
+}
+
+/////////////////////
+/* CREATE LOADS(S) */
+/////////////////////
+function createLoads() {
+    for(let i = 0; i < 10; i++) {
+        const geometry = new THREE.SphereGeometry(0.5, 20, 20);
+        const material = new THREE.MeshBasicMaterial({color: 0xff0000});
+        const load = new THREE.Mesh(geometry, material);
+        load.position.set((Math.random()+0.5) *20 , (Math.random()) , (Math.random()) );
+        loads.push(load);
+        scene.add(load);
+    }
+}
 
 //////////////////////
 /* CHECK COLLISIONS */
@@ -392,6 +421,8 @@ function init() {
     createScene();
     createCameras();
     createHUD();
+    createContainer(); 
+    createLoads();
 
     render();
 
