@@ -30,8 +30,9 @@ let scene_objects = {
     cargas: []
 }
 
-let keysState = { "1": false,"2": false, "3": false, "4": false, "5": false, "6": false, " ": false, "W": false, "S": false, "Q": false, "A": false, "E": false, "D": false, "R": false, "F": false, "0": false
+let keysState = { "1": false,"2": false, "3": false, "4": false, "5": false, "6": false, " ": false, "W": false, "S": false, "Q": false, "A": false, "E": false, "D": false, "R": false, "F": false, "0": true
 };
+let cameraKeys = ["1","2","3","4","5","6"," "];
 
 let hud, keysMap;
 
@@ -639,6 +640,40 @@ function onKeyDown(e) {
     
     const key = e.key.toUpperCase();
     if (keysState[key] !== undefined) {
+        // camaras
+        if (cameraKeys.includes(key)){
+            cameraKeys.forEach(camKey => {
+                keysState[camKey] = false;
+            });
+        }
+
+        // movimentos da grua
+        switch (key){
+            case "Q":
+                keysState["A"]=false;
+                break;
+            case "A":
+                keysState["Q"]=false;
+                break;
+            case "W":
+                keysState["S"]=false;
+                break;
+            case "S":
+                keysState["W"]=false;
+                break;
+            case "E":
+                keysState["D"]=false;
+                break;
+            case "D":
+                keysState["E"]=false;
+                break;
+            case "F":
+                keysState["R"]=false;
+                break;
+            case "R":
+                keysState["F"]=false;
+                break;
+        }
         keysState[key] = true;
         updateHUD();
     }
@@ -715,7 +750,7 @@ function onKeyUp(e){
     'use strict';
 
     const key = e.key.toUpperCase();
-    if (keysState[key] !== undefined) {
+    if (keysState[key] !== undefined && !cameraKeys.includes(key) && !(key === "0" && toggle_wireframe)) {
         keysState[key] = false;
         updateHUD();
     }
@@ -764,22 +799,22 @@ function createHUD() {
 
     // Mapeamento das teclas para exibição no HUD
     keysMap = {
-        "1": "Top Camera",
-        "2": "Side Camera",
-        "3": "Front Camera",
-        "4": "Perspective Camera",
-        "5": "Orthographic Camera",
-        "6": "Claw Camera",
-        " ": "Orbit Controls",
-        "W": "Move Car Forward",
-        "S": "Move Car Backward",
-        "Q": "Rotate Top Part Counter Clockwise",
-        "A": "Rotate Top Part Clockwise",
-        "E": "Move Claw Up",
-        "D": "Move Claw Down",
-        "R": "Open Claw",
-        "F": "Close Claw",
-        "0": "Toggle wireframe"
+        "1": "Top Camera (1)",
+        "2": "Side Camera (2)",
+        "3": "Front Camera (3)",
+        "4": "Perspective Camera (4)",
+        "5": "Orthographic Camera (5)",
+        "6": "Claw Camera (6)",
+        " ": "Orbit Controls (space)",
+        "W": "Move Car Forward (W)",
+        "S": "Move Car Backward (S)",
+        "Q": "Rotate Top Part Counter Clockwise (Q)",
+        "A": "Rotate Top Part Clockwise (A)",
+        "E": "Move Claw Up (E)",
+        "D": "Move Claw Down (D)",
+        "R": "Open Claw (R)",
+        "F": "Close Claw (F)",
+        "0": "Toggle wireframe (0)"
     };
 
     updateHUD();
