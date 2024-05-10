@@ -367,6 +367,8 @@ function createCargas() {
             );
             carga = new THREE.Mesh(geometries[i], material);
             carga.position.copy(position);
+            let random_scale = 0.5 + Math.random() * 1.5;
+            carga.scale.set(random_scale, random_scale, random_scale);
             const cargaBoundingBox = new THREE.Box3().setFromObject(carga);
 
             // verificar se ha colisoes
