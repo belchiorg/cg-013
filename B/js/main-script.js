@@ -353,14 +353,43 @@ function createContentor() {
 }
 
 function createCargas() {
-    let geometry = new THREE.DodecahedronGeometry(2, 1);
-    let material = new THREE.MeshBasicMaterial( { color: 0x0000AA, wireframe: true } );
+    const geometries = [ new THREE.DodecahedronGeometry(2, 1), new THREE.IcosahedronGeometry(2, 0), new THREE.TorusGeometry(1, 0.3), new THREE.TorusKnotGeometry(1, 0.2, 100, 2) ];
+    let material = new THREE.MeshBasicMaterial({ color: 0x0000AA, wireframe: true });
 
-    const geometries = [new THREE.DodecahedronGeometry(2, 1), new THREE.IcosahedronGeometry(2, 0), new THREE.TorusGeometry(1, 0.3), new THREE.TorusKnotGeometry( 1, 0.2, 100, 2 )]
+    for (let i = 0; i < 4; i++) {
+        let carga;
+        let validPosition = false;
+        while (!validPosition) {
+            const position = new THREE.Vector3(
+                Math.random() * 40 - 20,
+                2,
+                Math.random() * 40 - 20
+            );
+            carga = new THREE.Mesh(geometries[i], material);
+            carga.position.copy(position);
+            const cargaBoundingBox = new THREE.Box3().setFromObject(carga);
 
-    for (let i = 0; i < 4; i++){
-        let carga = new THREE.Mesh(geometries[i], material);
-        carga.position.set((Math.random() * 40 - 20), 2, (Math.random() * 40 - 20));
+            // verificar se colide com outra carga
+            let collides = false;
+            for (const existingCarga of scene_objects.cargas) {
+                const existingCargaBoundingBox = new THREE.Box3().setFromObject(existingCarga);
+                if (existingCargaBoundingBox.intersectsBox(cargaBoundingBox)) {
+                    collides = true;
+                    break;
+                }
+            }
+
+            // If there's a collision, adjust position and continue
+            if (collides) {
+                carga.position.set(
+                    Math.random() * 40 - 20,
+                    2,
+                    Math.random() * 40 - 20
+                );
+            } else {
+                validPosition = true;
+            }
+        }
         scene.add(carga);
         scene_objects.cargas.push(carga);
         esfera_cargas.push(new THREE.Box3().setFromObject(carga));
