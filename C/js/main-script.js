@@ -8,6 +8,11 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 /* GLOBAL VARIABLES */
 //////////////////////
 
+let scene;
+let scene_objects = {
+    carrossel
+};
+
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -15,6 +20,13 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 function createScene(){
     'use strict';
 
+    scene = new THREE.Scene();
+
+    scene.add(new THREE.AxesHelper(20));
+
+    scene_objects.carrossel = new THREE.Object3D();
+    createCarrossel(scene_objects.carrossel);
+    scene.add(scene_objects.carrossel);
 }
 
 //////////////////////
@@ -29,6 +41,14 @@ function createScene(){
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
+
+function createCarrossel(carrossel){
+    // Criar cilindro
+    let geometry = new THREE.CylinderGeometry(1.5, 1.5, 10, 32);
+    let material = new THREE.MeshPhongMaterial({ color: 0xff0000, wireframe: true}); // trocar para os varios tipos de material
+    let mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+}
 
 //////////////////////
 /* CHECK COLLISIONS */
