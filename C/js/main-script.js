@@ -13,9 +13,14 @@ let scene_objects = {
     carrossel: null,
     rings: []
 };
+let cameras = {
+    perspective_camera: null
+};
 let ringMovements = [false, false, false], ringMoving = [false, false, false];
-let perspective_camera, current_camera;
+let current_camera;
 let ambientLight, directionalLight, directionalLightOn;
+
+let controls
 
 
 /////////////////////
@@ -37,11 +42,13 @@ function createScene(){
 /* CREATE CAMERA(S) */
 //////////////////////
 function createCameras() {
-    perspective_camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight);
-    perspective_camera.position.set(40,40,40);
-    perspective_camera.lookAt(scene.position);
+    cameras.perspective_camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight);
+    cameras.perspective_camera.position.set(40,40,40);
+    cameras.perspective_camera.lookAt(scene.position);
+    
+    current_camera = cameras.perspective_camera;
 
-    current_camera = perspective_camera;
+    controls = new OrbitControls(cameras.perspective_camera, renderer.domElement);
 }
 
 
@@ -208,6 +215,10 @@ function init() {
 function animate() {
     'use strict';
     render();
+    
+    controls.update();
+
+    requestAnimationFrame(animate);
 }
 
 ////////////////////////////
