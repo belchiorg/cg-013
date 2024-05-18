@@ -125,6 +125,8 @@ function createRing(radius) {
     let geometry = new THREE.RingGeometry(3, radius, 32);
     let material = materials[current_material].clone();
     material.color = new THREE.Color(0x17C3B2);
+    material.wireframe = false ;
+    material.side = THREE.DoubleSide;
     let mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = Math.PI / 2;
     mesh.position.set(0, 3, 0);
@@ -176,12 +178,14 @@ function updateCurrentMaterial(material){
                 transverse(element);
             }
             else if (element.type === "Mesh") {
-                // Keep the color of the prev material
+                // Keep the color and side of the prev material
                 let color = element.material.color;
-                
+                let side = element.material.side;
+
                 // Create a copy of the material and assign it to the object
                 element.material = materials[current_material].clone();
                 element.material.color = color
+                element.material.side = side;
             }
         });
     }
