@@ -219,46 +219,30 @@ function createCarrossel(carrossel){
     // Criar cilindro
     let geometry = new THREE.CylinderGeometry(3, 3, 30, 32);
     let material = materials[current_material].clone();
-    material.color = new THREE.Color(0xff0000);
+    material.color = new THREE.Color(0xFFFFFF);
     let mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(0,15,0);
     carrossel.add(mesh);
 
-    // Adicionar 3 anéis
-    let ring = createRing(ringRadius[0]);
-    ring.position.set(0, 1.5,0);
-    carrossel.add(ring);
-    scene_objects.rings.push(ring);
-
-    ring = createRing(ringRadius[1]);
-    ring.position.set(0, 7,0);
-    carrossel.add(ring);
-    scene_objects.rings.push(ring);
-
-    ring = createRing(ringRadius[2]);
-    ring.position.set(0, 14,0);
-    carrossel.add(ring);
-    scene_objects.rings.push(ring);
-
-    
-    /*for (let i = 5; i<  10; i++){
-        ring = createRing(i);
-        ring.position.set(0, 1.5,0);
+    // adicionar 3 anéis
+    let ring;
+    for (let i = 0; i < 3; i++){
+        ring = createRing(i == 0 ? 3 : ringRadius[i - 1], ringRadius[i]);
+        ring.position.set(0, 0, 0);
         carrossel.add(ring);
         scene_objects.rings.push(ring);
-    }*/ 
+    }
 
     createFigures(2 /* should be the index, make a for*/, 0x0000ff);
     
-
     scene.add(carrossel);
 }
 
-function createRing(radius) {
+function createRing(inner_radius, outer_radius) {
     let ringGroup = new THREE.Object3D();
 
     // Criar anel superior
-    let geometry = new THREE.RingGeometry(3, radius, 32);
+    let geometry = new THREE.RingGeometry(inner_radius, outer_radius, 32);
     let material = materials[current_material].clone();
     material.color = new THREE.Color(0x17C3B2);
     material.wireframe = false ;
@@ -270,14 +254,14 @@ function createRing(radius) {
 
 
     // Criar anel inferior
-    geometry = new THREE.RingGeometry(3, radius, 32);
+    geometry = new THREE.RingGeometry(inner_radius, outer_radius, 32);
     mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = Math.PI / 2;
     mesh.position.set(0, 0, 0);
     ringGroup.add(mesh);
 
     // Criar cilindro entre os anéis
-    geometry = new THREE.CylinderGeometry(radius, radius, 3, 32, 1, true);
+    geometry = new THREE.CylinderGeometry(outer_radius, outer_radius, 3, 32, 1, true);
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(0, 1.5, 0);
     ringGroup.add(mesh);
@@ -342,12 +326,12 @@ function update(){
         if (ringMoving[i]) {
             if (ringMovements[i]) {
                 scene_objects.rings[i].position.y += 0.1;
-                if (scene_objects.rings[i].position.y > 28.5) {
+                if (scene_objects.rings[i].position.y > 27) {
                     ringMovements[i] = false; // Reverse direction
                 }
             } else {
                 scene_objects.rings[i].position.y -= 0.1;
-                if (scene_objects.rings[i].position.y < 1.5) {
+                if (scene_objects.rings[i].position.y < 0) {
                     ringMovements[i] = true; // Reverse direction
                 }
             }
@@ -413,7 +397,7 @@ function onKeyDown(e) {
     switch (e.keyCode) {
         case 68:
             directionalLightOn = !directionalLightOn;
-            directionalLight.visible = directionalLightOn; // nao funciona isto
+            directionalLight.visible = directionalLightOn;
             break;
         case 49: // Key '1'
             ringMoving[0] = true;
