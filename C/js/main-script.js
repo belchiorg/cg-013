@@ -16,11 +16,19 @@ let scene_objects = {
 let cameras = {
     perspective_camera: null
 };
+let materials = [
+    new THREE.MeshLambertMaterial({ wireframe: true }),
+    new THREE.MeshPhongMaterial({ wireframe: true }),
+    new THREE.MeshToonMaterial({ wireframe: true }),
+    new THREE.MeshNormalMaterial({ wireframe: true }),
+]
 let ringMovements = [false, false, false], ringMoving = [false, false, false];
 let current_camera;
 let ambientLight, directionalLight, directionalLightOn;
 
 let controls
+
+let current_material = 0;
 
 
 /////////////////////
@@ -69,6 +77,9 @@ function createLights() {
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
+function createFigures(ring, color){
+    'use strict';
+}
 
 function createCarrossel(carrossel){
     // Criar cilindro
@@ -160,7 +171,7 @@ function update(){
 
     // Rotate the central cylinder
     if (scene_objects.carrossel) {
-        scene_objects.carrossel.cylinder.rotation.y += 0.01;
+        scene_objects.carrossel.rotation.y += 0.01;
     }
 
     // Move the rings
@@ -214,6 +225,8 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
+    update();
+
     render();
     
     controls.update();
@@ -248,6 +261,20 @@ function onKeyDown(e) {
         case 51: // Key '3'
             ringMoving[2] = true;
             break;
+        //Key Q W E R
+        case 81:
+            updateCurrentMaterial(0);
+            break;
+        case 87:
+            updateCurrentMaterial(1);
+            break;
+        case 69:
+            updateCurrentMaterial(2);
+            break;
+        case 82:
+            updateCurrentMaterial(3);
+            break;
+        
     }
 }
 
