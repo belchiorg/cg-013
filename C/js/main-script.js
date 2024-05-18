@@ -84,7 +84,8 @@ function createFigures(ring, color){
 function createCarrossel(carrossel){
     // Criar cilindro
     let geometry = new THREE.CylinderGeometry(3, 3, 30, 32);
-    let material = new THREE.MeshPhongMaterial({ color: 0xff0000, wireframe: true}); // trocar para os varios tipos de material
+    let material = materials[current_material].clone();
+    material.color = new THREE.Color(0xff0000);
     let mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(0,15,0);
     carrossel.add(mesh);
@@ -122,7 +123,8 @@ function createRing(radius) {
 
     // Criar anel superior
     let geometry = new THREE.RingGeometry(3, radius, 32);
-    let material = new THREE.MeshPhongMaterial({ color: 0x17C3B2, wireframe: true }); // mudar para permitir os outros materiais
+    let material = materials[current_material].clone();
+    material.color = new THREE.Color(0x17C3B2);
     let mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = Math.PI / 2;
     mesh.position.set(0, 3, 0);
@@ -131,7 +133,6 @@ function createRing(radius) {
 
     // Criar anel inferior
     geometry = new THREE.RingGeometry(3, radius, 32);
-    material = new THREE.MeshPhongMaterial({ color: 0x17C3B2, wireframe: true }); // mudar para permitir os outros materiais
     mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = Math.PI / 2;
     mesh.position.set(0, 0, 0);
@@ -139,7 +140,6 @@ function createRing(radius) {
 
     // Criar cilindro entre os anéis
     geometry = new THREE.CylinderGeometry(radius, radius, 3, 32, 1, true);
-    material = new THREE.MeshPhongMaterial({ color: 0x17C3B2, wireframe: true }); // mudar para permitir os outros materiais
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(0, 1.5, 0);
     ringGroup.add(mesh);
@@ -166,6 +166,29 @@ function handleCollisions(){
 ////////////
 /* UPDATE */
 ////////////
+function updateCurrentMaterial(material){
+    current_material = material;
+    
+    //Aux function to transverse everything inside an Object3D
+    function transverse(object) {
+        object.children.forEach(element => {
+            if (element.type === "Object3D") {
+                transverse(element);
+            }
+            else if (element.type === "Mesh") {
+                // Keep the color of the prev material
+                let color = element.material.color;
+                
+                // Create a copy of the material and assign it to the object
+                element.material = materials[current_material].clone();
+                element.material.color = color
+            }
+        });
+    }
+
+    transverse(scene_objects.carrossel);
+}
+
 function update(){
     'use strict';
 
