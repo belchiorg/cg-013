@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 import * as Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
@@ -9,6 +10,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 //////////////////////
 
 let scene, renderer;
+let ringRadius = [5, 7, 9];
 let scene_objects = {
     carrossel: null,
     rings: []
@@ -17,11 +19,121 @@ let cameras = {
     perspective_camera: null
 };
 let materials = [
-    new THREE.MeshLambertMaterial({ wireframe: true }),
-    new THREE.MeshPhongMaterial({ wireframe: true }),
-    new THREE.MeshToonMaterial({ wireframe: true }),
-    new THREE.MeshNormalMaterial({ wireframe: true }),
+    new THREE.MeshLambertMaterial({ wireframe: false , side: THREE.DoubleSide}),
+    new THREE.MeshPhongMaterial({ wireframe: false , side: THREE.DoubleSide }),
+    new THREE.MeshToonMaterial({ wireframe: false , side: THREE.DoubleSide }),
+    new THREE.MeshNormalMaterial({ wireframe: false , side: THREE.DoubleSide }),
 ]
+let parametricFunctions = [
+    function (u, v, target) { // Create a cone
+        if (u < 0.1) {
+            // Base of the cone
+            const radius = u * 10; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        } else {
+            // Body of the cone
+            const coneU = (u - 0.1) / 0.9; // Adjust u to range from 0 to 1
+            const radius = 1 - coneU; // Radius decreases as coneU increases
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            const z = coneU * 2; // Height of the cone
+            target.set(x, y, z);
+        }
+    },
+    function (u, v, target) {
+        if (u < 0.1) {
+            // Base of the cone
+            const radius = u * 10; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        }
+        else if (u < 0.9) {
+            const radius = 1; // Radius of the cylinder
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            const z = u * 2; // Height of the cylinder (scaled to 2 units)
+            target.set(x, y, z);
+        }
+        else {
+            // Base of the cone
+            const radius = u * 0.1; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        }
+    },
+    function (u, v, target) {
+        let x = u - 0.5;
+        let y = v - 0.5;
+        let z = Math.cos(v * Math.PI * 2);
+        target.set(x, y, z);
+    },
+    function (u, v, target) {
+        let x = u - 0.5;
+        let y = v - 0.5;
+        let z = Math.sin(u * Math.PI * 2) * Math.sin(v * Math.PI * 2);
+        target.set(x, y, z);
+    },
+    function (u, v, target) {
+        let x = u - 0.5;
+        let y = v - 0.5;
+        let z = Math.sin(u * Math.PI * 2) * Math.cos(v * Math.PI * 2);
+        target.set(x, y, z);
+    },
+    function (u, v, target) {
+        let x = u - 0.5;
+        let y = v - 0.5;
+        let z = Math.cos(u * Math.PI * 2);
+        target.set(x, y, z);
+    },
+    function (u, v, target) {
+        if (u < 0.01) {
+            // Base of the cone
+            const radius = u * 10; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        }
+        else if (u < 0.99) {
+            const radius = 1; // Radius of the cylinder
+            const angle = v * 2 * Math.PI;
+            // Make the cylinder be a little concave in the middle
+            const x = radius * Math.cos(angle) * (Math.pow(u - 0.5, 2) * Math.pow(Math.cos(v * Math.PI), 2) + 1); 
+            const y = radius * Math.sin(angle) * (Math.pow(u - 0.5, 2) * Math.pow(Math.sin(v * Math.PI), 2) + 1);
+            const z = u * 2; // Height of the cylinder (scaled to 2 units)
+            target.set(x, y, z);
+        }
+        else {
+            // Base of the cone
+            const radius = u * 0.1; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        }
+    },
+    function (u, v, target) {
+        let x = u - 0.5;
+        let y = v - 0.5;
+        let z = Math.cos(v * Math.PI * 2);
+        target.set(x, y, z);
+    }
+]
+
 let ringMovements = [false, false, false], ringMoving = [false, false, false];
 let current_camera;
 let ambientLight, directionalLight, directionalLightOn;
@@ -40,6 +152,12 @@ function createScene(){
     scene = new THREE.Scene();
 
     scene.add(new THREE.AxesHelper(20));
+
+    let geometry = new THREE.SphereGeometry(100, 40, 40);
+    let material = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide});
+    let mesh = new THREE.Mesh(geometry, material);
+
+    scene.add(mesh);
 
     scene_objects.carrossel = new THREE.Object3D();
     createCarrossel(scene_objects.carrossel);
@@ -77,8 +195,24 @@ function createLights() {
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
-function createFigures(ring, color){
+function createFigures(ring_idx, color){
     'use strict';
+
+    let ring = scene_objects.rings[ring_idx];
+    for (let i = 0; i < 8; i++) {
+        let figureContainer = new THREE.Object3D();
+        figureContainer.position.set(0, ring.position.y, 0);
+        ring.add(figureContainer);
+        let geometry = new ParametricGeometry(parametricFunctions[i], 32, 32);
+        let material = materials[current_material].clone();
+        material.color = new THREE.Color(color);
+        let mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(ringRadius[ring_idx], 2, 0);
+        mesh.rotation.x = -Math.PI / 2;
+
+        figureContainer.rotation.y = i * Math.PI / 4;
+        figureContainer.add(mesh);
+    }
 }
 
 function createCarrossel(carrossel){
@@ -91,17 +225,17 @@ function createCarrossel(carrossel){
     carrossel.add(mesh);
 
     // Adicionar 3 anéis
-    let ring = createRing(5);
+    let ring = createRing(ringRadius[0]);
     ring.position.set(0, 1.5,0);
     carrossel.add(ring);
     scene_objects.rings.push(ring);
 
-    ring = createRing(7);
+    ring = createRing(ringRadius[1]);
     ring.position.set(0, 7,0);
     carrossel.add(ring);
     scene_objects.rings.push(ring);
 
-    ring = createRing(9);
+    ring = createRing(ringRadius[2]);
     ring.position.set(0, 14,0);
     carrossel.add(ring);
     scene_objects.rings.push(ring);
@@ -113,6 +247,8 @@ function createCarrossel(carrossel){
         carrossel.add(ring);
         scene_objects.rings.push(ring);
     }*/ 
+
+    createFigures(2 /* should be the index, make a for*/, 0x0000ff);
     
 
     scene.add(carrossel);
@@ -288,17 +424,16 @@ function onKeyDown(e) {
         case 51: // Key '3'
             ringMoving[2] = true;
             break;
-        //Key Q W E R
-        case 81:
+        case 81: // Key 'Q'
             updateCurrentMaterial(0);
             break;
-        case 87:
+        case 87: // Key 'W'
             updateCurrentMaterial(1);
             break;
-        case 69:
+        case 69: // Key 'E'
             updateCurrentMaterial(2);
             break;
-        case 82:
+        case 82: // Key 'R'
             updateCurrentMaterial(3);
             break;
         
