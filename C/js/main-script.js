@@ -20,7 +20,8 @@ let scene_objects = {
     figures: [],
 };
 let cameras = {
-    perspective_camera: null
+    perspective_camera: null,
+    stereo_camera: null
 };
 let materials = [
     new THREE.MeshLambertMaterial({ wireframe: false , side: THREE.DoubleSide}),
@@ -275,6 +276,9 @@ function createCameras() {
     cameras.perspective_camera.lookAt(scene.position);
     
     current_camera = cameras.perspective_camera;
+
+    cameras.stereo_camera = new THREE.StereoCamera();
+    cameras.stereo_camera.aspect = window.innerWidth / window.innerHeight;
 
     controls = new OrbitControls(cameras.perspective_camera, renderer.domElement);
 }
@@ -543,6 +547,9 @@ function init() {
     createScene();
     createCameras();
     createLights();
+
+    document.body.appendChild(VRButton.createButton(renderer));
+    renderer.xr.enabled = true;
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
