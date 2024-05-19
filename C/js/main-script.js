@@ -219,6 +219,8 @@ let lights = {
     directionalLight: null
 }
 
+const clock = new THREE.Clock();
+
 let controls
 
 let current_material = 0;
@@ -359,8 +361,12 @@ function createFigures(ring_idx, color){
     for (let i = 0; i < 8; i++) {
         let figureContainer = new THREE.Object3D(); // Container that allows the figure to rotate around the ring easily
 
+        let figureLight = new THREE.Object3D(); // Container for the figure and the lights that will illuminate it
+
         let figure = new THREE.Object3D(); // Container for the figure and the lights that will illuminate it
         
+        figureContainer.add(figureLight);
+
         figureContainer.position.set(0, ring.position.y, 0);
         ring.add(figureContainer);
 
@@ -380,10 +386,10 @@ function createFigures(ring_idx, color){
         else {
             x = 3 + (outerRadius[ring_idx] - 3)/2;
         }
-        figure.position.set(x, 5, 0);
+        figureLight.position.set(x, 5, 0);
 
         figureContainer.rotation.y = i * Math.PI / 4;
-        figureContainer.add(figure);
+        figureLight.add(figure);
 
         scene_objects.figures.push(figure);
 
@@ -400,9 +406,9 @@ function createFigures(ring_idx, color){
 
         // Create a spotlight to illuminate the figure
         let spotlight = new THREE.SpotLight(0xffffff, 40, 10, Math.PI / 5, 0.5, 2);
-        spotlight.position.set(0, 0, -2);
+        spotlight.position.set(0, -2, 0);
         spotlight.target = mesh;
-        figure.add(spotlight);
+        figureLight.add(spotlight);
 
         lights.spotlights.push(spotlight);
     }
@@ -412,7 +418,7 @@ function createFigures(ring_idx, color){
 
 function randomizeFiguresSpeed(){
     for (let i = 0; i < 24; i++) {
-        ringSpeeds.push(Math.random() * 0.3 + 0.1);
+        ringSpeeds.push(Math.random()*2);
     }
 }
 
@@ -485,9 +491,11 @@ function updateCurrentMaterial(material){
 function update(){
     'use strict';
 
+    let delta = clock.getDelta();
+
     //Rotate the central cylinder
     if (scene_objects.carrossel) {
-        scene_objects.carrossel.rotation.y += 0.01;
+        scene_objects.carrossel.rotation.y += delta;
     }
 
     // Move the rings
@@ -509,7 +517,7 @@ function update(){
 
     // Rotate the figures
     for (let i = 0; i < scene_objects.figures.length; i++) {
-        scene_objects.figures[i].rotation.y += ringSpeeds[i];
+        scene_objects.figures[i].rotation.z += ringSpeeds[i] * delta;
     }
 
 }
