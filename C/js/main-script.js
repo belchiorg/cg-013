@@ -10,7 +10,8 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 //////////////////////
 
 let scene, renderer;
-let ringRadius = [5, 7, 9];
+let outerRadius = [8, 16, 24];
+let innerRadius = [0, 8, 16]
 let scene_objects = {
     carrossel: null,
     rings: []
@@ -74,28 +75,82 @@ let parametricFunctions = [
         }
     },
     function (u, v, target) {
-        let x = u - 0.5;
-        let y = v - 0.5;
-        let z = Math.cos(v * Math.PI * 2);
+        if (u < 0.1) {
+            // Base of the cone
+            const radius = u * 10; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle) + Math.sin(u * Math.PI * 5);
+            const y = radius * Math.sin(angle) + Math.cos(u * Math.PI * 5);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        } else {
+            // Body of the cone
+            const coneU = (u - 0.1) / 0.9; // Adjust u to range from 0 to 1
+            const radius = 1 - coneU; // Radius decreases as coneU increases
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle) + Math.sin(u * Math.PI * 5);
+            const y = radius * Math.sin(angle) + Math.cos(u * Math.PI * 5);
+            const z = coneU * 2; // Height of the cone
+            target.set(x, y, z);
+        }
+    },
+    function (u, v, target) {
+        const bottomRadius = 0.5; // Radius at the base (now the smaller end)
+        const topRadius = 1; // Radius at the top (now the larger end)
+        const radius = topRadius + (bottomRadius - topRadius) * u; // Linear interpolation between top and bottom radius
+        const angle = v * 2 * Math.PI;
+        const x = radius * Math.cos(angle);
+        const y = radius * Math.sin(angle);
+        const z = (1 - u) * 2; // Height of the truncated cone (scaled to 2 units), inverted
         target.set(x, y, z);
     },
     function (u, v, target) {
-        let x = u - 0.5;
-        let y = v - 0.5;
-        let z = Math.sin(u * Math.PI * 2) * Math.sin(v * Math.PI * 2);
-        target.set(x, y, z);
+        if (u < 0.1) {
+            // Base of the cone
+            const radius = u * 10; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle) * Math.cos(u * Math.PI * 2);
+            const y = radius * Math.sin(angle) * Math.cos(u * Math.PI * 2);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        }
+        else if (u < 0.9) {
+            const radius = 1; // Radius of the cylinder
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle) * Math.cos(u * Math.PI * 2);
+            const y = radius * Math.sin(angle) * Math.cos(u * Math.PI * 2);
+            const z = u * 2; // Height of the cylinder (scaled to 2 units)
+            target.set(x, y, z);
+        }
+        else {
+            // Base of the cone
+            const radius = u * 0.1; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle) * Math.cos(u * Math.PI * 2);
+            const y = radius * Math.sin(angle) * Math.cos(u * Math.PI * 2);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        }
     },
     function (u, v, target) {
-        let x = u - 0.5;
-        let y = v - 0.5;
-        let z = Math.sin(u * Math.PI * 2) * Math.cos(v * Math.PI * 2);
-        target.set(x, y, z);
-    },
-    function (u, v, target) {
-        let x = u - 0.5;
-        let y = v - 0.5;
-        let z = Math.cos(u * Math.PI * 2);
-        target.set(x, y, z);
+        if (u < 0.1) {
+            // Base of the cone
+            const radius = u * 10; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle) * Math.pow(Math.cos(u * Math.PI * 2), 2);
+            const y = radius * Math.sin(angle) * Math.pow(Math.cos(u * Math.PI * 2), 2);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        } else {
+            // Body of the cone
+            const coneU = (u - 0.1) / 0.9; // Adjust u to range from 0 to 1
+            const radius = 1 - coneU; // Radius decreases as coneU increases
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle) + Math.pow(Math.cos(u * Math.PI * 2), 5);
+            const y = radius * Math.sin(angle) + Math.pow(Math.cos(u * Math.PI * 2), 5);
+            const z = coneU * 2; // Height of the cone
+            target.set(x, y, z);
+        }
     },
     function (u, v, target) {
         if (u < 0.01) {
@@ -127,10 +182,24 @@ let parametricFunctions = [
         }
     },
     function (u, v, target) {
-        let x = u - 0.5;
-        let y = v - 0.5;
-        let z = Math.cos(v * Math.PI * 2);
-        target.set(x, y, z);
+        if (u < 0.1) {
+            // Base of the cone
+            const radius = u * 10; // Scale u to create the radius
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle) * Math.cos(u * Math.PI * 2);
+            const y = radius * Math.sin(angle) * Math.cos(u * Math.PI * 2);
+            const z = 0; // Base at z = 0
+            target.set(x, y, z);
+        } else {
+            // Body of the cone
+            const coneU = (u - 0.1) / 0.9; // Adjust u to range from 0 to 1
+            const radius = 1 - coneU; // Radius decreases as coneU increases
+            const angle = v * 2 * Math.PI;
+            const x = radius * Math.cos(angle) * Math.cos(u * Math.PI * 2);
+            const y = radius * Math.sin(angle) * Math.cos(u * Math.PI * 2);
+            const z = coneU * 2; // Height of the cone
+            target.set(x, y, z);
+        }
     }
 ]
 
@@ -216,18 +285,27 @@ function createFigures(ring_idx, color){
 
     let ring = scene_objects.rings[ring_idx];
     for (let i = 0; i < 8; i++) {
-        let figureContainer = new THREE.Object3D();
+        let figureContainer = new THREE.Object3D(); // Container that allows the figure to rotate around the ring easily
+
+        let figure = new THREE.Object3D(); // Container for the figure and the lights that will illuminate it
+        
         figureContainer.position.set(0, ring.position.y, 0);
         ring.add(figureContainer);
+
+        // Create figure
         let geometry = new ParametricGeometry(parametricFunctions[i], 32, 32);
         let material = materials[current_material].clone();
         material.color = new THREE.Color(color);
         let mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(ringRadius[ring_idx], 2, 0);
-        mesh.rotation.x = -Math.PI / 2;
+
+        figure.add(mesh);
+
+        let x = innerRadius[ring_idx] + (outerRadius[ring_idx] - innerRadius[ring_idx])/2;
+        figure.position.set(x, 4, 0);
+        figure.rotation.x = -Math.PI / 2;
 
         figureContainer.rotation.y = i * Math.PI / 4;
-        figureContainer.add(mesh);
+        figureContainer.add(figure);
     }
 }
 
@@ -243,7 +321,7 @@ function createCarrossel(carrossel){
     // adicionar 3 anéis
     let ring;
     for (let i = 0; i < 3; i++){
-        ring = createRing(i == 0 ? 3 : ringRadius[i - 1], ringRadius[i]);
+        ring = createRing(innerRadius[i], outerRadius[i]);
         ring.position.set(0, 0, 0);
         carrossel.add(ring);
         scene_objects.rings.push(ring);
@@ -339,9 +417,9 @@ function update(){
     'use strict';
 
     // Rotate the central cylinder
-    if (scene_objects.carrossel) {
-        scene_objects.carrossel.rotation.y += 0.01;
-    }
+    // if (scene_objects.carrossel) {
+    //     scene_objects.carrossel.rotation.y += 0.01;
+    // }
 
     // Move the rings
     for (let i = 0; i < 3; i++) {
