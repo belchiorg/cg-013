@@ -39,6 +39,10 @@ let controls;
 
 let geometry, material, mesh;
 
+let container;
+
+let loads = [];
+
 let is_top_rotating = 0;
 let is_car_moving = 0;
 let is_claw_moving = 0;
@@ -402,7 +406,6 @@ function createCargas() {
     }
 }
 
-
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
@@ -625,6 +628,8 @@ function init() {
     createScene();
     createCameras();
     createHUD();
+    createContainer(); 
+    createLoads();
 
     render();
 
