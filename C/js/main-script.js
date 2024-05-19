@@ -95,13 +95,13 @@ let parametricFunctions = [
         }
     },
     function (u, v, target) {
-        const bottomRadius = 0.5; // Radius at the base (now the smaller end)
-        const topRadius = 1; // Radius at the top (now the larger end)
-        const radius = topRadius + (bottomRadius - topRadius) * u; // Linear interpolation between top and bottom radius
+        const bottomRadius = 1; // Radius at the base of the cone
+        const topRadius = 0.5; // Radius at the top of the cone
+        const radius = bottomRadius + (topRadius - bottomRadius) * u; // Linear interpolation between bottom and top radius
         const angle = v * 2 * Math.PI;
         const x = radius * Math.cos(angle);
         const y = radius * Math.sin(angle);
-        const z = (1 - u) * 2; // Height of the truncated cone (scaled to 2 units), inverted
+        const z = u * 2; // Height of the truncated cone (scaled to 2 units)
         target.set(x, y, z);
     },
     function (u, v, target) {
@@ -205,7 +205,14 @@ let parametricFunctions = [
 
 let ringMovements = [false, false, false], ringMoving = [false, false, false];
 let current_camera;
-let ambientLight, directionalLight, directionalLightOn;
+
+let directionalLightOn;
+
+let lights = {
+    spotlights: [],
+    ambientLight: null,
+    directionalLight: null
+}
 
 let controls
 
@@ -267,14 +274,14 @@ function createCameras() {
 /* CREATE LIGHT(S) */
 /////////////////////
 function createLights() {
-    ambientLight = new THREE.AmbientLight(0xffa500, 0.3);
-    scene.add(ambientLight);
+    lights.ambientLight = new THREE.AmbientLight(0xffa500, 0.3);
+    scene.add(lights.ambientLight);
 
-    directionalLight = new THREE.DirectionalLight(0xffffff, 20);
-    directionalLight.position.set(50,50,-50);
-    scene.add(directionalLight); // nao entendi a parte do angulo diferente de 0 em relacao a normal ns do que
+    lights.directionalLight = new THREE.DirectionalLight(0xffffff, 20);
+    lights.directionalLight.position.set(50,50,-50);
+    scene.add(lights.directionalLight); // nao entendi a parte do angulo diferente de 0 em relacao a normal ns do que
 
-    directionalLightOn = true;
+    lights.directionalLightOn = true;
 }
 
 ////////////////////////
@@ -301,11 +308,33 @@ function createFigures(ring_idx, color){
         figure.add(mesh);
 
         let x = innerRadius[ring_idx] + (outerRadius[ring_idx] - innerRadius[ring_idx])/2;
-        figure.position.set(x, 4, 0);
-        figure.rotation.x = -Math.PI / 2;
+        figure.position.set(x, 5, 0);
+        //figure.rotation.x = -Math.PI / 2;
 
         figureContainer.rotation.y = i * Math.PI / 4;
         figureContainer.add(figure);
+
+        //Create a grayish stick to hold the figure
+        geometry = new THREE.CylinderGeometry(0.1, 0.1, 3.8, 16);
+        material = materials[current_material].clone();
+        material.color = new THREE.Color(0x808080);
+        mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(0, 0, 0);
+        mesh.rotation.x = Math.PI / 2;
+        figure.add(mesh);
+
+        figure.rotation.x = -Math.PI / 2;
+
+        // Create a spotlight to illuminate the figure
+        let spotlight = new THREE.SpotLight(0xffffff, 40, 10, Math.PI / 5, 0.5, 2);
+        spotlight.position.set(0, 0, -2);
+        spotlight.target = mesh;
+        figure.add(spotlight);
+
+        lights.spotlights.push(spotlight);
+
+        const spotLightHelper = new THREE.SpotLightHelper(spotlight);
+        scene.add(spotLightHelper);
     }
 }
 
@@ -501,9 +530,9 @@ function onResize() {
 function onKeyDown(e) {
     'use strict';
     switch (e.keyCode) {
-        case 68:
+        case 68: // Key 'D'
             directionalLightOn = !directionalLightOn;
-            directionalLight.visible = directionalLightOn;
+            lights.directionalLight.visible = directionalLightOn;
             break;
         case 49: // Key '1'
             ringMoving[0] = true;
