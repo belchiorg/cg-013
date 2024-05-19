@@ -142,6 +142,8 @@ let controls
 
 let current_material = 0;
 
+const TextureLoader = new THREE.TextureLoader();
+
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -153,9 +155,23 @@ function createScene(){
 
     scene.add(new THREE.AxesHelper(20));
 
-    let geometry = new THREE.SphereGeometry(100, 40, 40);
-    let material = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide});
+    // Create Skydome
+    let geometry = new THREE.SphereGeometry(100, 40, 40, 0, Math.PI);
+    let material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide});
+    material.map = TextureLoader.load('static/sky.png');
     let mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.x = -Math.PI / 2;
+
+    scene.add(mesh);
+
+    //Create ground
+    geometry = new THREE.PlaneGeometry(200, 200, 1);
+    material = new THREE.MeshBasicMaterial({ color: 0x00ff00});
+    material.map = TextureLoader.load('static/grass.png');
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = -0.1;
+
 
     scene.add(mesh);
 
@@ -262,6 +278,12 @@ function createRing(inner_radius, outer_radius) {
 
     // Criar cilindro entre os anéis
     geometry = new THREE.CylinderGeometry(outer_radius, outer_radius, 3, 32, 1, true);
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(0, 1.5, 0);
+    ringGroup.add(mesh);
+
+    // Cria o cilindro dentro do anel
+    geometry = new THREE.CylinderGeometry(inner_radius, inner_radius, 3, 32, 1, true);
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(0, 1.5, 0);
     ringGroup.add(mesh);
@@ -387,6 +409,12 @@ function animate() {
 function onResize() { 
     'use strict';
 
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    if (window.innerHeight > 0 && window.innerWidth > 0) {
+        current_camera.aspect = window.innerWidth / window.innerHeight;
+        current_camera.updateProjectionMatrix();
+    }
 }
 
 ///////////////////////
