@@ -26,11 +26,12 @@ let scene_objects = {
     lower_finger: [],
     cable1: null,
     cable2: null,
-    containers: []
+    container: null,
+    cargas: []
 }
-let keysState = { "1": false,"2": false, "3": false, "4": false, "5": false, "6": false, " ": false, "W": false, "S": false, "Q": false, "A": false, "E": false, "D": false, "R": false, "F": false, "0": false
+
+let hud, keysMap, cameraKeys = ["1","2","3","4","5","6"," "], keysState = { "1": false,"2": false, "3": false, "4": false, "5": false, "6": false, " ": false, "W": false, "S": false, "Q": false, "A": false, "E": false, "D": false, "R": false, "F": false, "0": true
 };
-let hud, keysMap;
 
 let current_camera, scene, renderer;
 
@@ -49,6 +50,23 @@ let is_claw_closing = 0;
 let toggle_wireframe = true;
 let toggle_wireframe_changed = false;
 
+let is_colliding = -1;
+let esfera_garra, esfera_cargas=[];
+
+let is_animating = false;
+
+let clock = new THREE.Clock(true);
+
+let animation_state = {
+    "grabbing": false,
+    "lifting": false,
+    "rotating": false,
+    "centering": false, //car should be centered with the container
+    "lowering": false,
+    "releasing": false,
+    "resetting": false
+}
+
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -63,6 +81,8 @@ function createScene() {
     scene_objects.grua_in_english = new THREE.Object3D();
 
     createBase(scene_objects.grua_in_english);
+    createContentor();
+    createCargas();
     scene.add(scene_objects.grua_in_english);
 }
 
@@ -125,7 +145,7 @@ function createLowerFinger(lowerFinger, dimensions){
     material = new THREE.MeshBasicMaterial({color: 0x264653, wireframe: true});
     let lower_finger = new THREE.Mesh(geometry, material);
     lowerFinger.add(lower_finger);
-    lower_finger.position.set(0.55,-0.55,0); // TODO: mudar esta medida provavelmente
+    lower_finger.position.set(0.55,-0.55,0);
     lower_finger.rotation.z = Math.PI / 4;
     geometry = new THREE.CylinderGeometry(0.18, 0.18, 0.65, 8);
     material = new THREE.MeshBasicMaterial({color: 0x3C3C3B, wireframe: true});
@@ -151,8 +171,9 @@ function createFingers(claw) {
         finger.rotation.copy(fingerParams.rotation);
         let lowerFingerContainer = new THREE.Object3D();
         
-        lowerFingerContainer.position.set(-1.4, -1.1, 0); // TODO: mudar esta medida provavelmente (x e y)
+        lowerFingerContainer.position.set(-1.4, -1.1, 0);
         createLowerFinger(lowerFingerContainer, fingerParams.dimensions);
+        lowerFingerContainer.rotation.z = - Math.PI / 2;
         scene_objects.lower_finger.push(lowerFingerContainer);
         
         fingerContainer.rotation.y = Math.PI / 2 * i;
@@ -169,8 +190,8 @@ function createClaw(claw) {
     let base_garra = new THREE.Mesh( geometry, material );
 
     claw.add(base_garra)
-    
     createFingers(claw);
+    esfera_garra = new THREE.Box3().setFromObject(claw);
 }
 
 function createCar(car) {
@@ -181,7 +202,7 @@ function createCar(car) {
     car.add(mesh);
 
     //Add Cables
-    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 1, 8 ); // raio de 0.01 fica melhor
+    geometry = new THREE.CylinderGeometry( 0.1, 0.1, 1, 8 );
     material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: true} );
 
     scene_objects.cable1 = new THREE.Mesh( geometry, material );
@@ -196,7 +217,7 @@ function createCar(car) {
     
     scene_objects.claw = new THREE.Object3D();
     createClaw(scene_objects.claw);
-    scene_objects.claw.position.set(0, -8.8, 0); // TODO: esta posicao ta meio confusa
+    scene_objects.claw.position.set(0, -8.8, 0);
     car.add(scene_objects.claw);
 }
 
@@ -256,7 +277,7 @@ function createTopPart(topPart) {
     geometry = new THREE.CylinderGeometry( 0.01, 0.01, 7.2, 32 );
     material = new THREE.MeshBasicMaterial( {color: 0x000000, wireframe: true} );
     cylinder = new THREE.Mesh( geometry, material );
-    cylinder.position.set(-3.3, 7.3, 0); // TODO: corrigir estas medidas
+    cylinder.position.set(-3.3, 7.3, 0);
     cylinder.rotation.z = - Math.PI / 2.7 ;
     topPart.add(cylinder);
 
@@ -264,7 +285,7 @@ function createTopPart(topPart) {
     geometry = new THREE.CylinderGeometry( 0.01, 0.01, 15.9, 32 );
     material = new THREE.MeshBasicMaterial( {color: 0x000000, wireframe: true} );
     cylinder = new THREE.Mesh( geometry, material );
-    cylinder.position.set(7.8, 7.3, 0); // TODO: corrigir estas medidas
+    cylinder.position.set(7.8, 7.3, 0);
     cylinder.rotation.z = Math.PI / 2.25 ;
     topPart.add(cylinder);
 
@@ -294,29 +315,94 @@ function createBase(grua) {
     grua.add(scene_objects.top_part);
 }
 
-/////////////////////
-/* CREATE CONTAINER */
-/////////////////////
-function createContainer() {
-    let geometry = new THREE.BoxGeometry( 5, 5, 5 );
-    let material = new THREE.MeshBasicMaterial( {color: 0x00FF00} );
-    let container = new THREE.Mesh( geometry, material );
-    container.position.set((Math.random()+0.5) *20 , (Math.random()) , (Math.random()) );
-    scene.add( container );
-    scene_objects.containers.push(container);
+function createContentor() {
+
+    scene_objects.container = new THREE.Object3D();
+
+    scene_objects.container.position.set(0, 5, -25);
+
+    material = new THREE.MeshBasicMaterial( {color: 0x7A82AB, wireframe: true});
+
+    geometry = new THREE.BoxGeometry( 0.5, 10, 20 );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(5, 0, 0);
+    scene_objects.container.add(mesh);
+    
+    geometry = new THREE.BoxGeometry( 10, 10, 0.5 );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(0, 0, 10);
+    scene_objects.container.add(mesh);
+
+    geometry = new THREE.BoxGeometry( 10, 10, 0.5 );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(0, 0, -10);
+    scene_objects.container.add(mesh);
+
+    geometry = new THREE.BoxGeometry( 0.5, 10, 20 );
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(-5, 0, 0);
+    scene_objects.container.add(mesh);
+
+    //floor
+    geometry = new THREE.BoxGeometry( 10, 0.5, 20 );
+    material = new THREE.MeshBasicMaterial( {color: 0x3C3C3B, wireframe: true});
+    mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set(0, -5, 0);
+    scene_objects.container.add(mesh);
+
+    scene.add(scene_objects.container);
 }
 
-/////////////////////
-/* CREATE LOADS(S) */
-/////////////////////
-function createLoads() {
-    for(let i = 0; i < 10; i++) {
-        const geometry = new THREE.SphereGeometry(0.5, 20, 20);
-        const material = new THREE.MeshBasicMaterial({color: 0xff0000});
-        const load = new THREE.Mesh(geometry, material);
-        load.position.set((Math.random()+0.5) *20 , (Math.random()) , (Math.random()) );
-        loads.push(load);
-        scene.add(load);
+function createCargas() {
+    const geometries = [ new THREE.DodecahedronGeometry(2, 1), new THREE.IcosahedronGeometry(2, 0), new THREE.TorusGeometry(1, 0.3), new THREE.TorusKnotGeometry(1, 0.2, 100, 2) ];
+    const material = new THREE.MeshBasicMaterial({ color: 0x0000AA, wireframe: true });
+
+    const contentorBoundingBox = new THREE.Box3().setFromObject(scene_objects.container);
+    const baseBoundingBox = new THREE.Box3( new THREE.Vector3(-1, 0, -1), new THREE.Vector3(1, 24, 1));
+
+    for (let i = 0; i < 4; i++) {
+        let carga;
+        let validPosition = false;
+        while (!validPosition) {
+            const position = new THREE.Vector3(
+                Math.random() * 40 - 20,
+                2,
+                Math.random() * 40 - 20
+            );
+            carga = new THREE.Mesh(geometries[i], material);
+            carga.position.copy(position);
+            let random_scale = 0.5 + Math.random() * 1.5;
+            carga.scale.set(random_scale, random_scale, random_scale);
+            const cargaBoundingBox = new THREE.Box3().setFromObject(carga);
+
+            // verificar se ha colisoes
+            let collides = false;
+            if (contentorBoundingBox.intersectsBox(cargaBoundingBox) || baseBoundingBox.intersectsBox(cargaBoundingBox)) {
+                collides = true;
+            } else {
+                for (const existingCarga of scene_objects.cargas) {
+                    const existingCargaBoundingBox = new THREE.Box3().setFromObject(existingCarga);
+                    if (existingCargaBoundingBox.intersectsBox(cargaBoundingBox)) {
+                        collides = true;
+                        break;
+                    }
+                }
+            }
+
+            // ha colisao --> mudar posicao da carga
+            if (collides) {
+                carga.position.set(
+                    Math.random() * 40 - 20,
+                    2,
+                    Math.random() * 40 - 20
+                );
+            } else {
+                validPosition = true;
+            }
+        }
+        scene.add(carga);
+        scene_objects.cargas.push(carga);
+        esfera_cargas.push(new THREE.Box3().setFromObject(carga));
     }
 }
 
@@ -325,10 +411,15 @@ function createLoads() {
 //////////////////////
 function checkCollisions(){
     'use strict';
-
     //check if the finger is colliding with a box
-
-
+    esfera_garra.setFromObject(scene_objects.claw);
+    is_colliding = -1;
+    for (var i = 0; i < 4; i++){
+        esfera_cargas[i].setFromObject(scene_objects.cargas[i]);
+        if (esfera_garra.intersectsBox(esfera_cargas[i])) {
+            is_colliding = i;
+        }
+    }
 }
 
 ///////////////////////
@@ -336,7 +427,11 @@ function checkCollisions(){
 ///////////////////////
 function handleCollisions(){
     'use strict';
-
+    console.log("Colliding with box " + is_colliding);
+    is_animating = true;
+    scene_objects.cargas[is_colliding].position.set(0,-3,0);
+    scene_objects.claw.add(scene_objects.cargas[is_colliding])
+    animation_state.grabbing = true;
 }
 
 ////////////
@@ -345,35 +440,36 @@ function handleCollisions(){
 function update(){
     'use strict';
 
+    let delta = clock.getDelta();
+
     // Update the car position
 
     if(is_car_moving !== 0){
         if ((scene_objects.car.position.x < 30 && is_car_moving > 0) || (scene_objects.car.position.x > 3 && is_car_moving < 0)){
-        scene_objects.car.position.x += is_car_moving * 0.1;
+        scene_objects.car.position.x += is_car_moving * delta * 10;
         }
     }
 
     // Update the top part rotation
     if(is_top_rotating !== 0){
-        scene_objects.top_part.rotation.y += is_top_rotating * 0.01;
+        scene_objects.top_part.rotation.y += is_top_rotating * delta;
     }
 
     // Update the claw position
     if(is_claw_moving !== 0){
-        if ((scene_objects.claw.position.y < -0.9 && is_claw_moving > 0) || is_claw_moving<0){
-        // TODO: mudar os valores para os atributos da grua
-        // TODO: limitar o movimento da garra para nao ir alem do chao
-        // Move the claw
-        scene_objects.claw.position.y += is_claw_moving * 0.1;
+        if ((scene_objects.claw.position.y < -0.9 && is_claw_moving > 0) || ( scene_objects.claw.position.y > -25 && is_claw_moving<0 && is_colliding < 0)){
+
+        scene_objects.claw.position.y += is_claw_moving * delta *10;
         let cable1 = scene_objects.cable1;
         let cable2 = scene_objects.cable2;
 
         // Update cable so that it still connects the car and the claw
-        cable1.position.y += is_claw_moving * 0.05;
-        cable2.position.y += is_claw_moving * 0.05;
+        cable1.position.y += is_claw_moving * delta/2 *10;
+        cable2.position.y += is_claw_moving * delta/2 *10 ;
 
-        cable1.scale.y -= is_claw_moving * 0.1;
-        cable2.scale.y -= is_claw_moving * 0.1;}
+        cable1.scale.y -= is_claw_moving * delta *10;
+        cable2.scale.y -= is_claw_moving * delta*10;
+        }
     }
 
     // Update the claw closing
@@ -381,9 +477,15 @@ function update(){
     
     // should only rotate around the max and min values of rotation (between 0 and PI)
     if(is_claw_closing !== 0){
-        if ((is_claw_closing > 0 && claw_rotation < 0) || (is_claw_closing < 0 && claw_rotation > -Math.PI / 2)){
+        if (is_claw_closing > 0 && claw_rotation < 0){
+            if (is_colliding >= 0) handleCollisions();
             scene_objects.lower_finger.forEach(function(finger){
-                finger.rotation.z += is_claw_closing * 0.01;
+                finger.rotation.z += is_claw_closing * delta;
+            });
+        }
+        else if (is_claw_closing < 0 && claw_rotation > -Math.PI / 2){
+            scene_objects.lower_finger.forEach(function(finger){
+                finger.rotation.z += is_claw_closing * delta;
             });
         }
     }
@@ -395,6 +497,111 @@ function update(){
                 object.material.wireframe = toggle_wireframe; // Define o modo de wireframe
             }
         });
+    }
+
+    checkCollisions();
+}
+
+function updateAnimation(){
+    let delta = clock.getDelta();
+    //Should make an animation of grabbing the box, lift it, rotate to where the container is, lower the box and release it
+    if (animation_state.grabbing){
+        //Should animate the claw closing
+        scene_objects.lower_finger.forEach(function(finger){
+            finger.rotation.z += delta;
+        });
+        if (scene_objects.lower_finger[0].rotation.z >= 0){
+            animation_state.grabbing = false;
+            animation_state.lifting = true;
+        }
+    }
+    else if (animation_state.lifting){
+        //Should animate the claw moving up
+        scene_objects.claw.position.y += delta *10;
+        let cable1 = scene_objects.cable1;
+        let cable2 = scene_objects.cable2;
+
+        // Update cable so that it still connects the car and the claw
+        cable1.position.y += delta/2 *10;
+        cable2.position.y += delta/2 *10 ;
+
+        cable1.scale.y -= delta *10;
+        cable2.scale.y -= delta*10;
+
+        if (scene_objects.claw.position.y >= -0.9){
+            animation_state.lifting = false;
+            animation_state.rotating = true;
+        }
+    }
+    else if (animation_state.rotating){
+        //Should animate the top part rotating to where the container is
+        scene_objects.top_part.rotation.y += delta;
+        scene_objects.top_part.rotation.y = scene_objects.top_part.rotation.y % (2 * Math.PI);
+        if (scene_objects.top_part.rotation.y >= Math.PI/2 -0.01 && scene_objects.top_part.rotation.y <= Math.PI/2 + 0.01){
+            animation_state.rotating = false;
+            animation_state.centering = true;
+        }
+    }
+    else if (animation_state.centering){
+        //Should animate the car moving to the center of the container
+        if (scene_objects.car.position.x < 24.9){
+            scene_objects.car.position.x += delta *10;
+        }
+        else if (scene_objects.car.position.x > 25.1){
+            scene_objects.car.position.x -= delta *10;
+        }
+        else{
+            animation_state.centering = false;
+            animation_state.lowering = true;
+        }
+    }
+    else if (animation_state.lowering){
+        //Should animate the claw moving down
+        scene_objects.claw.position.y -= delta *10;
+        let cable1 = scene_objects.cable1;
+        let cable2 = scene_objects.cable2;
+
+        // Update cable so that it still connects the car and the claw
+        cable1.position.y -= delta/2 *10;
+        cable2.position.y -= delta/2 *10 ;
+
+        cable1.scale.y += delta *10;
+        cable2.scale.y += delta*10;
+
+        if (scene_objects.claw.position.y <= -22){
+            animation_state.lowering = false;
+            animation_state.releasing = true;
+        }
+    }
+    else if (animation_state.releasing){
+        //Should animate the claw opening
+        scene_objects.lower_finger.forEach(function(finger){
+            finger.rotation.z -= delta;
+        });
+        if (scene_objects.lower_finger[0].rotation.z <= -Math.PI / 2){
+            animation_state.releasing = false;
+            animation_state.resetting = true
+            scene_objects.claw.remove(scene_objects.cargas[is_colliding]);
+            scene_objects.container.add(scene_objects.cargas[is_colliding]);
+        }
+    }
+    else if (animation_state.resetting){
+        //just lifts a little bit the claw
+        scene_objects.claw.position.y += delta *10;
+        let cable1 = scene_objects.cable1;
+        let cable2 = scene_objects.cable2;
+
+        // Update cable so that it still connects the car and the claw
+        cable1.position.y += delta/2 *10;
+        cable2.position.y += delta/2 *10 ;
+        
+        cable1.scale.y -= delta *10;
+        cable2.scale.y -= delta*10;
+        if (scene_objects.claw.position.y >= -10){
+            animation_state.resetting = false;
+            is_animating = false;
+            is_colliding = -1;
+        }
     }
 }
 
@@ -437,7 +644,11 @@ function init() {
 function animate() {
     'use strict';
 
-    update();
+    if (!is_animating) {
+        update();
+    } else {
+        updateAnimation();
+    }
 
     render();
 
@@ -469,6 +680,40 @@ function onKeyDown(e) {
     
     const key = e.key.toUpperCase();
     if (keysState[key] !== undefined) {
+        // camaras
+        if (cameraKeys.includes(key)){
+            cameraKeys.forEach(camKey => {
+                keysState[camKey] = false;
+            });
+        }
+
+        // movimentos da grua
+        switch (key){
+            case "Q":
+                keysState["A"]=false;
+                break;
+            case "A":
+                keysState["Q"]=false;
+                break;
+            case "W":
+                keysState["S"]=false;
+                break;
+            case "S":
+                keysState["W"]=false;
+                break;
+            case "E":
+                keysState["D"]=false;
+                break;
+            case "D":
+                keysState["E"]=false;
+                break;
+            case "F":
+                keysState["R"]=false;
+                break;
+            case "R":
+                keysState["F"]=false;
+                break;
+        }
         keysState[key] = true;
         updateHUD();
     }
@@ -476,19 +721,19 @@ function onKeyDown(e) {
     //Keys from 1 to 6 change the camera 
     switch (e.keyCode) {
         case 49:
-            current_camera = cameras.top_camera;
+            current_camera = cameras.front_camera;
             break;
         case 50:
             current_camera = cameras.side_camera;
             break;
         case 51:
-            current_camera = cameras.front_camera;
+            current_camera = cameras.top_camera;
             break;
         case 52:
-            current_camera = cameras.perspective_camera;
+            current_camera = cameras.orthographic_camera;
             break;
         case 53:
-            current_camera = cameras.orthographic_camera;
+            current_camera = cameras.perspective_camera;
             break;
         case 54:
             current_camera = cameras.claw_camera;
@@ -545,7 +790,7 @@ function onKeyUp(e){
     'use strict';
 
     const key = e.key.toUpperCase();
-    if (keysState[key] !== undefined) {
+    if (keysState[key] !== undefined && !cameraKeys.includes(key) && !(key === "0" && toggle_wireframe)) {
         keysState[key] = false;
         updateHUD();
     }
@@ -585,7 +830,7 @@ function createHUD() {
     hud.style.top = '10px';
     hud.style.left = '10px';
     hud.style.padding = '10px';
-    hud.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    hud.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
     hud.style.border = '1px solid black';
     hud.style.fontFamily = 'Arial';
     hud.style.fontSize = '13px';
@@ -594,22 +839,22 @@ function createHUD() {
 
     // Mapeamento das teclas para exibição no HUD
     keysMap = {
-        "1": "Top Camera",
-        "2": "Side Camera",
-        "3": "Front Camera",
-        "4": "Perspective Camera",
-        "5": "Orthographic Camera",
-        "6": "Claw Camera",
-        " ": "Orbit Controls",
-        "W": "Move Car Forward",
-        "S": "Move Car Backward",
-        "Q": "Rotate Top Part Counter Clockwise",
-        "A": "Rotate Top Part Clockwise",
-        "E": "Move Claw Up",
-        "D": "Move Claw Down",
-        "R": "Open Claw",
-        "F": "Close Claw",
-        "0": "Toggle wireframe"
+        "1": "Front Camera (1)",
+        "2": "Side Camera (2)",
+        "3": "Top Camera (3)",
+        "4": "Orthographic Camera (4)",
+        "5": "Perspective Camera (5)",
+        "6": "Claw Camera (6)",
+        " ": "Orbit Controls (space)",
+        "W": "Move Car Forward (W)",
+        "S": "Move Car Backward (S)",
+        "Q": "Rotate Top Part Counter Clockwise (Q)",
+        "A": "Rotate Top Part Clockwise (A)",
+        "E": "Move Claw Up (E)",
+        "D": "Move Claw Down (D)",
+        "R": "Open Claw (R)",
+        "F": "Close Claw (F)",
+        "0": "Toggle wireframe (0)"
     };
 
     updateHUD();
@@ -620,6 +865,9 @@ function updateHUD() {
     for (const key in keysMap) {
         const keyDiv = document.createElement('div');
         keyDiv.textContent = keysMap[key] + (keysState[key] ? ' [Active]' : '');
+        if (keysState[key]) {
+            keyDiv.style.color = 'green'; // Change color to green when active
+        }
         hud.appendChild(keyDiv);
     }
 }
