@@ -14,7 +14,8 @@ let outerRadius = [8, 16, 24];
 let innerRadius = [0, 8, 16]
 let scene_objects = {
     carrossel: null,
-    rings: []
+    rings: [],
+    figures: [],
 };
 let cameras = {
     perspective_camera: null
@@ -206,7 +207,7 @@ let parametricFunctions = [
 let ringMovements = [false, false, false], ringMoving = [false, false, false];
 let current_camera;
 
-let directionalLightOn;
+let directionalLightOn = true, spotlightsOn = true;
 
 let lights = {
     spotlights: [],
@@ -233,7 +234,8 @@ function createScene(){
 
     // Create Skydome
     let geometry = new THREE.SphereGeometry(100, 40, 40, 0, Math.PI);
-    let material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide});
+    let material = materials[current_material].clone();
+    material.side = THREE.BackSide;
     material.map = TextureLoader.load('static/sky.png');
     let mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
@@ -241,13 +243,13 @@ function createScene(){
     scene.add(mesh);
 
     //Create ground
-    geometry = new THREE.PlaneGeometry(200, 200, 1);
-    material = new THREE.MeshBasicMaterial({ color: 0x00ff00});
+    geometry = new THREE.PlaneGeometry(500, 500, 1);
+    material = materials[current_material].clone();
+    material.color = new THREE.Color(0x00ff00);
     material.map = TextureLoader.load('static/grass.png');
     mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.y = -0.1;
-
 
     scene.add(mesh);
 
@@ -274,70 +276,17 @@ function createCameras() {
 /* CREATE LIGHT(S) */
 /////////////////////
 function createLights() {
-    lights.ambientLight = new THREE.AmbientLight(0xffa500, 0.3);
+    lights.ambientLight = new THREE.AmbientLight(0xffa500, 0.5);
     scene.add(lights.ambientLight);
 
-    lights.directionalLight = new THREE.DirectionalLight(0xffffff, 20);
-    lights.directionalLight.position.set(50,50,-50);
+    lights.directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+    lights.directionalLight.position.set(-40,40, -40);
     scene.add(lights.directionalLight); // nao entendi a parte do angulo diferente de 0 em relacao a normal ns do que
-
-    lights.directionalLightOn = true;
 }
 
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
-function createFigures(ring_idx, color){
-    'use strict';
-
-    let ring = scene_objects.rings[ring_idx];
-    for (let i = 0; i < 8; i++) {
-        let figureContainer = new THREE.Object3D(); // Container that allows the figure to rotate around the ring easily
-
-        let figure = new THREE.Object3D(); // Container for the figure and the lights that will illuminate it
-        
-        figureContainer.position.set(0, ring.position.y, 0);
-        ring.add(figureContainer);
-
-        // Create figure
-        let geometry = new ParametricGeometry(parametricFunctions[i], 32, 32);
-        let material = materials[current_material].clone();
-        material.color = new THREE.Color(color);
-        let mesh = new THREE.Mesh(geometry, material);
-
-        figure.add(mesh);
-
-        let x = innerRadius[ring_idx] + (outerRadius[ring_idx] - innerRadius[ring_idx])/2;
-        figure.position.set(x, 5, 0);
-        //figure.rotation.x = -Math.PI / 2;
-
-        figureContainer.rotation.y = i * Math.PI / 4;
-        figureContainer.add(figure);
-
-        //Create a grayish stick to hold the figure
-        geometry = new THREE.CylinderGeometry(0.1, 0.1, 3.8, 16);
-        material = materials[current_material].clone();
-        material.color = new THREE.Color(0x808080);
-        mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(0, 0, 0);
-        mesh.rotation.x = Math.PI / 2;
-        figure.add(mesh);
-
-        figure.rotation.x = -Math.PI / 2;
-
-        // Create a spotlight to illuminate the figure
-        let spotlight = new THREE.SpotLight(0xffffff, 40, 10, Math.PI / 5, 0.5, 2);
-        spotlight.position.set(0, 0, -2);
-        spotlight.target = mesh;
-        figure.add(spotlight);
-
-        lights.spotlights.push(spotlight);
-
-        const spotLightHelper = new THREE.SpotLightHelper(spotlight);
-        scene.add(spotLightHelper);
-    }
-}
-
 function createCarrossel(carrossel){
     // Criar cilindro
     let geometry = new THREE.CylinderGeometry(3, 3, 30, 32);
@@ -354,9 +303,8 @@ function createCarrossel(carrossel){
         ring.position.set(0, 0, 0);
         carrossel.add(ring);
         scene_objects.rings.push(ring);
+        createFigures(i, 0x20AF30 + i * 0x404040);
     }
-
-    createFigures(2 /* should be the index, make a for*/, 0x0000ff);
     
     scene.add(carrossel);
 }
@@ -367,7 +315,7 @@ function createRing(inner_radius, outer_radius) {
     // Criar anel superior
     let geometry = new THREE.RingGeometry(inner_radius, outer_radius, 32);
     let material = materials[current_material].clone();
-    material.color = new THREE.Color(0x17C3B2);
+    material.color = new THREE.Color(0xC03221);
     material.wireframe = false ;
     material.side = THREE.DoubleSide;
     let mesh = new THREE.Mesh(geometry, material);
@@ -396,6 +344,62 @@ function createRing(inner_radius, outer_radius) {
     ringGroup.add(mesh);
 
     return ringGroup;
+}
+
+function createFigures(ring_idx, color){
+    'use strict';
+
+    let ring = scene_objects.rings[ring_idx];
+    for (let i = 0; i < 8; i++) {
+        let figureContainer = new THREE.Object3D(); // Container that allows the figure to rotate around the ring easily
+
+        let figure = new THREE.Object3D(); // Container for the figure and the lights that will illuminate it
+        
+        figureContainer.position.set(0, ring.position.y, 0);
+        ring.add(figureContainer);
+
+        // Create figure
+        let geometry = new ParametricGeometry(parametricFunctions[i], 32, 32);
+        let material = materials[current_material].clone();
+        material.color = new THREE.Color(color);
+        let mesh = new THREE.Mesh(geometry, material);
+
+        figure.add(mesh);
+
+        let x;
+
+        if (innerRadius[ring_idx] > 0) {
+            x = innerRadius[ring_idx] + (outerRadius[ring_idx] - innerRadius[ring_idx])/2;
+        }
+        else {
+            x = 3 + (outerRadius[ring_idx] - 3)/2;
+        }
+        figure.position.set(x, 5, 0);
+
+        figureContainer.rotation.y = i * Math.PI / 4;
+        figureContainer.add(figure);
+
+        scene_objects.figures.push(figure);
+
+        //Create a grayish stick to hold the figure
+        geometry = new THREE.CylinderGeometry(0.1, 0.1, 3.8, 16);
+        material = materials[current_material].clone();
+        material.color = new THREE.Color(0x808080);
+        mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(0, 0, 0);
+        mesh.rotation.x = Math.PI / 2;
+        figure.add(mesh);
+
+        figure.rotation.x = -Math.PI / 2;
+
+        // Create a spotlight to illuminate the figure
+        let spotlight = new THREE.SpotLight(0xffffff, 40, 10, Math.PI / 5, 0.5, 2);
+        spotlight.position.set(0, 0, -2);
+        spotlight.target = mesh;
+        figure.add(spotlight);
+
+        lights.spotlights.push(spotlight);
+    }
 }
 
 //////////////////////
@@ -531,8 +535,16 @@ function onKeyDown(e) {
     'use strict';
     switch (e.keyCode) {
         case 68: // Key 'D'
+            console.log("Directional Light: " + directionalLightOn);
             directionalLightOn = !directionalLightOn;
             lights.directionalLight.visible = directionalLightOn;
+            break;
+        // S key
+        case 83:
+            spotlightsOn = !spotlightsOn;
+            lights.spotlights.forEach(spotlight => {
+                spotlight.visible = spotlightsOn;
+            });
             break;
         case 49: // Key '1'
             ringMoving[0] = true;
