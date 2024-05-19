@@ -13,6 +13,8 @@ let scene, renderer;
 let outerRadius = [8, 16, 24];
 let innerRadius = [0, 8, 16]
 let scene_objects = {
+    skydome: null,
+    ground: null,
     carrossel: null,
     rings: [],
     figures: [],
@@ -204,6 +206,8 @@ let parametricFunctions = [
     }
 ]
 
+let ringSpeeds = [];
+
 let ringMovements = [false, false, false], ringMoving = [false, false, false];
 let current_camera;
 
@@ -232,6 +236,10 @@ function createScene(){
 
     scene.add(new THREE.AxesHelper(20));
 
+    scene_objects.carrossel = new THREE.Object3D();
+    createCarrossel(scene_objects.carrossel);
+    scene.add(scene_objects.carrossel);
+
     // Create Skydome
     let geometry = new THREE.SphereGeometry(100, 40, 40, 0, Math.PI);
     let material = materials[current_material].clone();
@@ -240,7 +248,8 @@ function createScene(){
     let mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
 
-    scene.add(mesh);
+    scene_objects.skydome = mesh;
+    scene.add(scene_objects.skydome);
 
     //Create ground
     geometry = new THREE.PlaneGeometry(500, 500, 1);
@@ -251,11 +260,8 @@ function createScene(){
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.y = -0.1;
 
-    scene.add(mesh);
-
-    scene_objects.carrossel = new THREE.Object3D();
-    createCarrossel(scene_objects.carrossel);
-    scene.add(scene_objects.carrossel);
+    scene_objects.ground = mesh;
+    scene.add(scene_objects.ground);
 }
 
 //////////////////////
@@ -400,6 +406,14 @@ function createFigures(ring_idx, color){
 
         lights.spotlights.push(spotlight);
     }
+
+    randomizeFiguresSpeed();
+}
+
+function randomizeFiguresSpeed(){
+    for (let i = 0; i < 24; i++) {
+        ringSpeeds.push(Math.random() * 0.3 + 0.1);
+    }
 }
 
 //////////////////////
@@ -434,25 +448,47 @@ function updateCurrentMaterial(material){
                 // Keep the color and side of the prev material
                 let color = element.material.color;
                 let side = element.material.side;
+                let texture = element.material.map;
 
                 // Create a copy of the material and assign it to the object
                 element.material = materials[current_material].clone();
                 element.material.color = color
                 element.material.side = side;
+                element.material.map = texture;
             }
         });
     }
 
     transverse(scene_objects.carrossel);
+
+    //Update SkyDome
+    let color = scene_objects.skydome.material.color;
+    let side = scene_objects.skydome.material.side;
+    let texture = scene_objects.skydome.material.map;
+
+    scene_objects.skydome.material = materials[current_material].clone();
+    scene_objects.skydome.material.color = color
+    scene_objects.skydome.material.side = side;
+    scene_objects.skydome.material.map = texture;
+
+    //Update Ground
+    color = scene_objects.ground.material.color;
+    side = scene_objects.ground.material.side;
+    texture = scene_objects.ground.material.map;
+
+    scene_objects.ground.material = materials[current_material].clone();
+    scene_objects.ground.material.color = color
+    scene_objects.ground.material.side = side;
+    scene_objects.ground.material.map = texture;
 }
 
 function update(){
     'use strict';
 
-    // Rotate the central cylinder
-    // if (scene_objects.carrossel) {
-    //     scene_objects.carrossel.rotation.y += 0.01;
-    // }
+    //Rotate the central cylinder
+    if (scene_objects.carrossel) {
+        scene_objects.carrossel.rotation.y += 0.01;
+    }
 
     // Move the rings
     for (let i = 0; i < 3; i++) {
@@ -469,6 +505,11 @@ function update(){
                 }
             }
         }
+    }
+
+    // Rotate the figures
+    for (let i = 0; i < scene_objects.figures.length; i++) {
+        scene_objects.figures[i].rotation.y += ringSpeeds[i];
     }
 
 }
