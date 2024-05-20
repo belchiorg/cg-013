@@ -554,6 +554,8 @@ function init() {
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("resize", onResize);
+
+    renderer.setAnimationLoop(animate);
 }
 
 /////////////////////
@@ -563,11 +565,17 @@ function animate() {
     'use strict';
     update();
 
+    if (renderer.xr.isPresenting) {
+        current_camera = cameras.stereo_camera;
+    } else {
+        current_camera = cameras.perspective_camera;
+    }
+
     render();
     
     controls.update();
 
-    requestAnimationFrame(animate);
+    // requestAnimationFrame(animate);
 }
 
 ////////////////////////////
