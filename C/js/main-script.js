@@ -209,7 +209,7 @@ let parametricFunctions = [
 
 let ringSpeeds = [];
 
-let ringMovements = [false, false, false], ringMoving = [false, false, false];
+let ringMovements = [false, false, false], ringMoving = [true, true, true], ringPosition = [9, 17, 0];
 let current_camera;
 
 let directionalLightOn = true, spotlightsOn = true;
@@ -224,7 +224,7 @@ const clock = new THREE.Clock();
 
 let controls
 
-let current_material = 0;
+let current_material = 0, lightingEnabled = true;
 
 const TextureLoader = new THREE.TextureLoader();
 
@@ -312,7 +312,7 @@ function createCarrossel(carrossel){
     let ring;
     for (let i = 0; i < 3; i++){
         ring = createRing(innerRadius[i], outerRadius[i]);
-        ring.position.set(0, 0, 0);
+        ring.position.set(0, ringPosition[i], 0);
         carrossel.add(ring);
         scene_objects.rings.push(ring);
         createFigures(i, 0x20AF30 + i * 0x404040);
@@ -371,7 +371,7 @@ function createFigures(ring_idx, color){
         
         figureContainer.add(figureLight);
 
-        figureContainer.position.set(0, ring.position.y, 0);
+        figureContainer.position.set(0, 0, 0);
         ring.add(figureContainer);
 
         // Create figure
@@ -588,7 +588,8 @@ function onResize() {
 
     if (window.innerHeight > 0 && window.innerWidth > 0) {
         current_camera.aspect = window.innerWidth / window.innerHeight;
-        current_camera.updateProjectionMatrix();
+        if (current_camera == cameras.stereo_camera){
+        current_camera.updateProjectionMatrix();}
     }
 }
 
@@ -611,13 +612,13 @@ function onKeyDown(e) {
             });
             break;
         case 49: // Key '1'
-            ringMoving[0] = true;
+            ringMoving[0] = !ringMoving[0];
             break;
         case 50: // Key '2'
-            ringMoving[1] = true;
+            ringMoving[1] = !ringMoving[1];
             break;
         case 51: // Key '3'
-            ringMoving[2] = true;
+            ringMoving[2] = !ringMoving[2];
             break;
         case 81: // Key 'Q'
             updateCurrentMaterial(0);
@@ -631,6 +632,10 @@ function onKeyDown(e) {
         case 82: // Key 'R'
             updateCurrentMaterial(3);
             break;
+        case 84:
+            lightingEnabled = !lightingEnabled;
+            toggleLighting(lightingEnabled);
+            break;
         
     }
 }
@@ -640,17 +645,6 @@ function onKeyDown(e) {
 ///////////////////////
 function onKeyUp(e){
     'use strict';
-    switch (e.keyCode) {
-        case 49: // Key '1'
-            ringMoving[0] = false;
-            break;
-        case 50: // Key '2'
-            ringMoving[1] = false;
-            break;
-        case 51: // Key '3'
-            ringMoving[2] = false;
-            break;
-    }
 }
 
 init();
