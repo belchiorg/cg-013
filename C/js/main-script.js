@@ -11,13 +11,14 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 let scene, renderer;
 let outerRadius = [8, 16, 24];
-let innerRadius = [0, 8, 16]
+let innerRadius = [0, 8, 16];
 let scene_objects = {
     skydome: null,
     ground: null,
     carrossel: null,
     rings: [],
     figures: [],
+    mobius: null,
 };
 let cameras = {
     perspective_camera: null,
@@ -28,7 +29,7 @@ let materials = [
     new THREE.MeshPhongMaterial({ wireframe: false , side: THREE.DoubleSide }),
     new THREE.MeshToonMaterial({ wireframe: false , side: THREE.DoubleSide }),
     new THREE.MeshNormalMaterial({ wireframe: false , side: THREE.DoubleSide }),
-]
+];
 let parametricFunctions = [
     function (u, v, target) { // Create a cone
         if (u < 0.1) {
@@ -139,7 +140,8 @@ let parametricFunctions = [
     function (u, v, target) {
         if (u < 0.1) {
             // Base of the cone
-            const radius = u * 10; // Scale u to create the radius
+            const radius = u * 
+10; // Scale u to create the radius
             const angle = v * 2 * Math.PI;
             const x = radius * Math.cos(angle) * Math.pow(Math.cos(u * Math.PI * 2), 2);
             const y = radius * Math.sin(angle) * Math.pow(Math.cos(u * Math.PI * 2), 2);
@@ -212,17 +214,18 @@ let ringSpeeds = [];
 let ringMovements = [false, false, false], ringMoving = [true, true, true], ringPosition = [9, 17, 0];
 let current_camera;
 
-let directionalLightOn = true, spotlightsOn = true;
+let directionalLightOn = true, spotlightsOn = true, pointLightsOn = true;
 
 let lights = {
     spotlights: [],
+    pointlights: [],
     ambientLight: null,
     directionalLight: null
 }
 
 const clock = new THREE.Clock();
 
-let controls
+let controls;
 
 let current_material = 0, lightingEnabled = true;
 
@@ -248,7 +251,7 @@ function createScene(){
     let geometry = new THREE.SphereGeometry(100, 40, 40, 0, Math.PI);
     let material = materials[current_material].clone();
     material.side = THREE.BackSide;
-    material.map = TextureLoader.load('static/sky.png');
+    material.map = TextureLoader.load('static/sky.png'); // Ensure this is a frame from "An Optical Poem"
     let mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(0,-30,0);
@@ -267,6 +270,9 @@ function createScene(){
 
     scene_objects.ground = mesh;
     scene.add(scene_objects.ground);
+    
+    // Create Mobius Strip
+    createMobiusStrip(scene);
 }
 
 //////////////////////
@@ -295,7 +301,9 @@ function createLights() {
 
     lights.directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     lights.directionalLight.position.set(-40,40, -40);
-    scene.add(lights.directionalLight); // nao entendi a parte do angulo diferente de 0 em relacao a normal ns do que
+    scene.add(lights.directionalLight);
+    
+    createLightingForFigures();
 }
 
 ////////////////////////
@@ -623,11 +631,16 @@ function onKeyDown(e) {
         case 82: // Key 'R'
             updateCurrentMaterial(3);
             break;
-        case 84:
+        case 84: // Key 'T'
             lightingEnabled = !lightingEnabled;
             toggleLighting(lightingEnabled);
             break;
-        
+        case 80: // Key 'P'
+            pointLightsOn = !pointLightsOn;
+            lights.pointlights.forEach(light => {
+                light.visible = pointLightsOn;
+            });
+            break;
     }
 }
 
@@ -636,6 +649,112 @@ function onKeyDown(e) {
 ///////////////////////
 function onKeyUp(e){
     'use strict';
+}
+
+function createMobiusStrip(scene) {
+    'use strict';
+
+    var strip = new THREE.Object3D();
+    var geometry = new THREE.BufferGeometry();
+    var uSteps = 100; // number of segments in u direction
+    var vSteps = 20; // number of segments in v direction
+    var vertices = [];
+    var indices = [];
+
+    for (var i = 0; i <= uSteps; i++) {
+        var u = i / uSteps * 2 * Math.PI;
+        for (var j = 0; j <= vSteps; j++) {
+            var v = j / vSteps - 0.5;
+
+            // formula for a point on a Mobius strip
+            var x = (1 + v/2 * Math.cos(u/2)) * Math.cos(u);
+            var y = (1 + v/2 * Math.cos(u/2)) * Math.sin(u);
+            var z = v/2 * Math.sin(u/2);
+
+            vertices.push(x, y, z);
+        }
+    }
+
+    // create faces
+    for (var i = 0; i < uSteps; i++) {
+        for (var j = 0; j < vSteps; j++) {
+            var a = i * (vSteps + 1) + j;
+            var b = (i+1) * (vSteps + 1) + j;
+            var c = (i+1) * (vSteps + 1) + (j+1);
+            var d = i * (vSteps + 1) + (j+1);
+
+            indices.push(a, b, d);
+            indices.push(b, c, d);
+        }
+    }
+
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+
+    var material = new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.DoubleSide });
+    var mobius = new THREE.Mesh(geometry, material);
+    mobius.scale.set(5, 5, 5); 
+    mobius.rotateX(-Math.PI / 2);
+    mobius.castShadow = true;
+    mobius.receiveShadow = true;
+    strip.add(mobius);
+    strip.position.set(0, 15, 0);
+    scene.add(strip);
+    scene_objects.mobius = strip;
+
+    // Add 8 punctual lights
+    var lightPositions = [];
+    var numLights = 8;
+
+    for (var k = 0; k < numLights; k++) {
+        var u = k / numLights * 2 * Math.PI;
+        var v = 0; // center of the strip
+
+        // formula for a point on a Mobius strip
+        var x = (1 + v/2 * Math.cos(u/2)) * Math.cos(u);
+        var y = (1 + v/2 * Math.cos(u/2)) * Math.sin(u);
+        var z = v/2 * Math.sin(u/2);
+
+        lightPositions.push(new THREE.Vector3(x * 10, y * 10, z * 10));
+    }
+
+    lightPositions.forEach(function(position) {
+        var light = new THREE.PointLight(0xffffff, 1, 100);
+        lights.pointlights.push(light);
+        light.position.copy(position);
+        mobius.add(light);
+    });
+}
+
+function createLightingForFigures() {
+    for (let i = 0; i < scene_objects.figures.length; i++) {
+        const figure = scene_objects.figures[i];
+        
+        // Spotlight
+        const spotlight = new THREE.SpotLight(0xffffff, 1);
+        spotlight.position.set(0, -2, 0);
+        spotlight.target = figure;
+        figure.add(spotlight);
+        lights.spotlights.push(spotlight);
+        
+        // Point Light
+        const pointLight = new THREE.PointLight(0xff0000, 1, 10);
+        pointLight.position.set(0, 2, 0);
+        figure.add(pointLight);
+        lights.pointlights.push(pointLight); // Adjust to a separate array if needed
+    }
+}
+
+function toggleLighting(enable) {
+    lights.ambientLight.visible = enable;
+    lights.directionalLight.visible = enable;
+    lights.spotlights.forEach(light => {
+        light.visible = enable;
+    });
+    lights.pointlights.forEach(light => {
+        light.visible = enable;
+    });
 }
 
 init();
