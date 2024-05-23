@@ -241,6 +241,7 @@ function createScene(){
 
     scene_objects.carrossel = new THREE.Object3D();
     createCarrossel(scene_objects.carrossel);
+    scene_objects.carrossel.position.set(0,-30,0);
     scene.add(scene_objects.carrossel);
 
     // Create Skydome
@@ -250,6 +251,7 @@ function createScene(){
     material.map = TextureLoader.load('static/sky.png');
     let mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(0,-30,0);
 
     scene_objects.skydome = mesh;
     scene.add(scene_objects.skydome);
@@ -261,7 +263,7 @@ function createScene(){
     material.map = TextureLoader.load('static/grass.png');
     mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.y = -0.1;
+    mesh.position.set(0,-30.1,0);
 
     scene_objects.ground = mesh;
     scene.add(scene_objects.ground);
@@ -322,40 +324,36 @@ function createCarrossel(carrossel){
 }
 
 function createRing(inner_radius, outer_radius) {
-    let ringGroup = new THREE.Object3D();
 
-    // Criar anel superior
-    let geometry = new THREE.RingGeometry(inner_radius, outer_radius, 32);
-    let material = materials[current_material].clone();
-    material.color = new THREE.Color(0xC03221);
-    material.wireframe = false ;
-    material.side = THREE.DoubleSide;
-    let mesh = new THREE.Mesh(geometry, material);
-    mesh.rotation.x = Math.PI / 2;
-    mesh.position.set(0, 3, 0);
-    ringGroup.add(mesh);
+// Criar a forma do anel
+let shape = new THREE.Shape();
 
+// Círculo externo
+shape.moveTo(outer_radius, 0);
+shape.absarc(0, 0, outer_radius, 0, Math.PI * 2, false);
 
-    // Criar anel inferior
-    geometry = new THREE.RingGeometry(inner_radius, outer_radius, 32);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.rotation.x = Math.PI / 2;
-    mesh.position.set(0, 0, 0);
-    ringGroup.add(mesh);
+// Círculo interno
+let hole = new THREE.Path();
+hole.moveTo(inner_radius, 0);
+hole.absarc(0, 0, inner_radius, 0, Math.PI * 2, true);
 
-    // Criar cilindro entre os anéis
-    geometry = new THREE.CylinderGeometry(outer_radius, outer_radius, 3, 32, 1, true);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(0, 1.5, 0);
-    ringGroup.add(mesh);
+shape.holes.push(hole);
 
-    // Cria o cilindro dentro do anel
-    geometry = new THREE.CylinderGeometry(inner_radius, inner_radius, 3, 32, 1, true);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(0, 1.5, 0);
-    ringGroup.add(mesh);
+// Extrudar a forma
+let extrudeSettings = {
+  depth: 3,
+  bevelEnabled: false,
+};
 
-    return ringGroup;
+let geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+let material = materials[current_material].clone();
+material.color = new THREE.Color(0xC03221);
+material.wireframe = false ;
+material.side = THREE.DoubleSide;
+let ring = new THREE.Mesh(geometry, material);
+
+ring.rotation.x = Math.PI / 2;
+return ring;
 }
 
 function createFigures(ring_idx, color){
@@ -390,9 +388,10 @@ function createFigures(ring_idx, color){
         else {
             x = 3 + (outerRadius[ring_idx] - 3)/2;
         }
-        figureLight.position.set(x, 5, 0);
+        figureLight.position.set(x, 2, 0);
 
         figureContainer.rotation.y = i * Math.PI / 4;
+        figureContainer.rotation.x = - Math.PI / 2;
         figureLight.add(figure);
 
         scene_objects.figures.push(figure);
@@ -406,7 +405,7 @@ function createFigures(ring_idx, color){
         mesh.rotation.x = Math.PI / 2;
         figure.add(mesh);
 
-        figure.rotation.x = -Math.PI / 2;
+        figure.rotation.x = - Math.PI / 2;
 
         // Create a spotlight to illuminate the figure
         let spotlight = new THREE.SpotLight(0xffffff, 40, 10, Math.PI / 5, 0.5, 2);
@@ -507,12 +506,12 @@ function update(){
         if (ringMoving[i]) {
             if (ringMovements[i]) {
                 scene_objects.rings[i].position.y += 0.1;
-                if (scene_objects.rings[i].position.y > 27) {
+                if (scene_objects.rings[i].position.y > 30) {
                     ringMovements[i] = false; // Reverse direction
                 }
             } else {
                 scene_objects.rings[i].position.y -= 0.1;
-                if (scene_objects.rings[i].position.y < 0) {
+                if (scene_objects.rings[i].position.y < 3) {
                     ringMovements[i] = true; // Reverse direction
                 }
             }
@@ -521,7 +520,7 @@ function update(){
 
     // Rotate the figures
     for (let i = 0; i < scene_objects.figures.length; i++) {
-        scene_objects.figures[i].rotation.z += ringSpeeds[i] * delta;
+        scene_objects.figures[i].rotation.z -= ringSpeeds[i] * delta;
     }
 
 }
@@ -548,14 +547,12 @@ function init() {
     createCameras();
     createLights();
 
-    document.body.appendChild(VRButton.createButton(renderer));
     renderer.xr.enabled = true;
+    document.body.appendChild(VRButton.createButton(renderer));
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("resize", onResize);
-
-    renderer.setAnimationLoop(animate);
 }
 
 /////////////////////
@@ -565,17 +562,12 @@ function animate() {
     'use strict';
     update();
 
-    if (renderer.xr.isPresenting) {
-        current_camera = cameras.stereo_camera;
-    } else {
-        current_camera = cameras.perspective_camera;
-    }
-
     render();
     
     controls.update();
 
     // requestAnimationFrame(animate);
+    renderer.setAnimationLoop(animate);
 }
 
 ////////////////////////////
@@ -604,8 +596,7 @@ function onKeyDown(e) {
             directionalLightOn = !directionalLightOn;
             lights.directionalLight.visible = directionalLightOn;
             break;
-        // S key
-        case 83:
+        case 83: // S key
             spotlightsOn = !spotlightsOn;
             lights.spotlights.forEach(spotlight => {
                 spotlight.visible = spotlightsOn;
