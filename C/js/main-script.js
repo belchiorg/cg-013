@@ -635,7 +635,6 @@ function onKeyDown(e) {
     'use strict';
     switch (e.keyCode) {
         case 68: // Key 'D'
-            console.log("Directional Light: " + directionalLightOn);
             directionalLightOn = !directionalLightOn;
             lights.directionalLight.visible = directionalLightOn;
             break;
