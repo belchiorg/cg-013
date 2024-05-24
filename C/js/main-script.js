@@ -211,6 +211,8 @@ let parametricFunctions = [
 
 let ringSpeeds = [];
 
+let figureRotationAxis = [];
+
 let ringMovements = [false, false, false], ringMoving = [true, true, true], ringPosition = [9, 17, 0];
 let current_camera;
 
@@ -425,11 +427,18 @@ function createFigures(ring_idx, color){
     }
 
     randomizeFiguresSpeed();
+    randomizeFigureRotationAxis();
 }
 
 function randomizeFiguresSpeed(){
     for (let i = 0; i < 24; i++) {
-        ringSpeeds.push(Math.random()*2);
+        ringSpeeds.push(Math.random()*5);
+    }
+}
+
+function randomizeFigureRotationAxis(){
+    for (let i = 0; i < 24; i++) {
+        figureRotationAxis.push(new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize());
     }
 }
 
@@ -497,6 +506,28 @@ function updateCurrentMaterial(material){
     scene_objects.ground.material.color = color
     scene_objects.ground.material.side = side;
     scene_objects.ground.material.map = texture;
+
+    //Update Mobius Strip
+    color = scene_objects.mobius.children[0].material.color;
+    side = scene_objects.mobius.children[0].material.side;
+    texture = scene_objects.mobius.children[0].material.map;
+
+    scene_objects.mobius.children[0].material = materials[current_material].clone();
+    scene_objects.mobius.children[0].material.color = color
+    scene_objects.mobius.children[0].material.side = side;
+    scene_objects.mobius.children[0].material.map = texture;
+
+    //Update Figures
+    for (let i = 0; i < scene_objects.figures.length; i++) {
+        let color = scene_objects.figures[i].children[0].material.color;
+        let side = scene_objects.figures[i].children[0].material.side;
+        let texture = scene_objects.figures[i].children[0].material.map;
+
+        scene_objects.figures[i].children[0].material = materials[current_material].clone();
+        scene_objects.figures[i].children[0].material.color = color
+        scene_objects.figures[i].children[0].material.side = side;
+        scene_objects.figures[i].children[0].material.map = texture;
+    }
 }
 
 function update(){
@@ -528,7 +559,7 @@ function update(){
 
     // Rotate the figures
     for (let i = 0; i < scene_objects.figures.length; i++) {
-        scene_objects.figures[i].rotation.z -= ringSpeeds[i] * delta;
+        scene_objects.figures[i].rotateOnWorldAxis(figureRotationAxis[i], ringSpeeds[i] * delta);
     }
 
 }
@@ -589,7 +620,10 @@ function onResize() {
     if (window.innerHeight > 0 && window.innerWidth > 0) {
         current_camera.aspect = window.innerWidth / window.innerHeight;
         if (current_camera == cameras.stereo_camera){
-        current_camera.updateProjectionMatrix();}
+            current_camera.updateProjectionMatrix();
+        } else {
+            cameras.perspective_camera.updateProjectionMatrix();
+        }
     }
 }
 
@@ -703,28 +737,14 @@ function createMobiusStrip(scene) {
     scene.add(strip);
     scene_objects.mobius = strip;
 
-    // Add 8 punctual lights
-    var lightPositions = [];
-    var numLights = 8;
+    // Create 8 point lights to illuminate the Mobius strip
+    for (let i = 0; i < 8; i++) {
+        const pointLight = new THREE.PointLight(0xffffff, 10, 10);
+        pointLight.position.set(Math.cos(Math.PI/4 * i),Math.sin(Math.PI/4 * i), 0);
+        mobius.add(pointLight);
+        lights.pointlights.push(pointLight);
 
-    for (var k = 0; k < numLights; k++) {
-        var u = k / numLights * 2 * Math.PI;
-        var v = 0; // center of the strip
-
-        // formula for a point on a Mobius strip
-        var x = (1 + v/2 * Math.cos(u/2)) * Math.cos(u);
-        var y = (1 + v/2 * Math.cos(u/2)) * Math.sin(u);
-        var z = v/2 * Math.sin(u/2);
-
-        lightPositions.push(new THREE.Vector3(x * 10, y * 10, z * 10));
     }
-
-    lightPositions.forEach(function(position) {
-        var light = new THREE.PointLight(0xffffff, 1, 100);
-        lights.pointlights.push(light);
-        light.position.copy(position);
-        mobius.add(light);
-    });
 }
 
 function createLightingForFigures() {
@@ -748,12 +768,12 @@ function createLightingForFigures() {
 
 function toggleLighting(enable) {
     lights.ambientLight.visible = enable;
-    lights.directionalLight.visible = enable;
+    lights.directionalLight.visible = enable ? directionalLightOn : false;
     lights.spotlights.forEach(light => {
-        light.visible = enable;
+        light.visible = enable ? spotlightsOn : false;
     });
     lights.pointlights.forEach(light => {
-        light.visible = enable;
+        light.visible = enable ? pointLightsOn : false;
     });
 }
 
