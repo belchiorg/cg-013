@@ -29,6 +29,7 @@ let materials = [
     new THREE.MeshPhongMaterial({ wireframe: false , side: THREE.DoubleSide }),
     new THREE.MeshToonMaterial({ wireframe: false , side: THREE.DoubleSide }),
     new THREE.MeshNormalMaterial({ wireframe: false , side: THREE.DoubleSide }),
+    new THREE.MeshBasicMaterial({wireframe: false, side: THREE.DoubleSide})
 ];
 let parametricFunctions = [
     function (u, v, target) { // Create a cone
@@ -229,7 +230,7 @@ const clock = new THREE.Clock();
 
 let controls;
 
-let current_material = 0, lightingEnabled = true;
+let current_material = 0, lightingEnabled = true, previous_material = 0;
 
 const TextureLoader = new THREE.TextureLoader();
 
@@ -668,6 +669,12 @@ function onKeyDown(e) {
         case 84: // Key 'T'
             lightingEnabled = !lightingEnabled;
             toggleLighting(lightingEnabled);
+            if (current_material == 4){
+                updateCurrentMaterial(previous_material);
+            } else{
+                previous_material = current_material;
+                updateCurrentMaterial(4);
+            }
             break;
         case 80: // Key 'P'
             pointLightsOn = !pointLightsOn;
@@ -728,7 +735,7 @@ function createMobiusStrip(scene) {
 
     var material = new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.DoubleSide });
     var mobius = new THREE.Mesh(geometry, material);
-    mobius.scale.set(5, 5, 5); 
+    mobius.scale.set(10, 10, 10); 
     mobius.rotateX(-Math.PI / 2);
     mobius.castShadow = true;
     mobius.receiveShadow = true;
